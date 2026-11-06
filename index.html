@@ -250,9 +250,10 @@
     /* Phones: the toolbar stays under the title page instead of following along, and the composer buttons
        fit on one row you can swipe sideways, so most of the screen is left for reading. */
     header.top { position: static; }
-    /* 17 points above and below the participants, as in the mockup. (The status bar shares a class name
-       with the composer's status line and inherited its 6 px top margin; on phones it goes.) */
-    .top-inner { justify-content: flex-start; padding: 17px 16px 4px; row-gap: 17px; column-gap: 6px; }
+    /* 17 points between the painting and the participants, as in the mockup. The buttons follow 32 points lower,
+       so in the start view they stay under the composer. (The status bar shares a class name with the
+       composer's status line and inherited its 6 px top margin; on phones it goes.) */
+    .top-inner { justify-content: flex-start; padding: 17px 16px 4px; row-gap: 32px; column-gap: 6px; }
     .top-inner .bar.status { margin-top: 0; }
     .top-inner .bar { gap: 6px; }
     .composer-inner .row::-webkit-scrollbar { display: none; }
@@ -1931,19 +1932,17 @@
   if (masthead && topBar && 'IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => topBar.classList.toggle('stuck', !e.isIntersecting)).observe(masthead);
   }
-  // The strip is as tall as the clock area, which changes when the phone turns, so the watch is renewed on resize.
+  // The strip is as tall as the clock area. It turns dark only once the painting has scrolled out from under the clock,
+  // read straight from the scroll position so every browser gives the same answer.
   const shade = document.querySelector('.statusbar-shade');
-  let shadeWatch = null, shadeInset = -1;
-  function watchCover() {
+  function updateShade() {
     const inset = shade.offsetHeight;
-    if (inset === shadeInset) return;
-    shadeInset = inset;
-    if (shadeWatch) shadeWatch.disconnect();
-    shadeWatch = new IntersectionObserver(([e]) => document.documentElement.classList.toggle('cover-gone', !e.isIntersecting),
-      { rootMargin: '-' + inset + 'px 0px 0px 0px' });
-    shadeWatch.observe(masthead);
+    document.documentElement.classList.toggle('cover-gone', inset > 0 && masthead.getBoundingClientRect().bottom <= inset);
   }
-  if (masthead && shade && 'IntersectionObserver' in window) { watchCover(); window.addEventListener('resize', watchCover); }
+  if (masthead && shade) {
+    ['scroll', 'resize', 'load'].forEach(ev => window.addEventListener(ev, updateShade, { passive: true }));
+    updateShade();
+  }
   // Leaving the page or switching apps on the phone: save now. Coming back: fetch what the other device did.
   const flushSaves = () => {
     if (roomTimer) pushRoom(true);
