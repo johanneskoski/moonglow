@@ -72,8 +72,9 @@
   .masthead .banner { display: block; width: 100%; height: auto; margin-top: 13px; border-radius: var(--radius); }
   /* Phone cover (Johannes's iPhone Max mockup 6.11.2026): the painting edge to edge, the logo and the motto in its sky. */
   .cover { display: none; }
-  /* Under the clock of the home-screen app: clear over the painting, dark once the conversation scrolls there. */
-  .statusbar-shade { position: fixed; top: 0; left: 0; right: 0; height: var(--sat, env(safe-area-inset-top, 0px)); background: #141417;
+  /* Under the clock of the home-screen app: clear over the painting, dark once the conversation scrolls there.
+     A hair darker than the page, so a screenshot shows whether a dark band is this strip or the phone's own. */
+  .statusbar-shade { position: fixed; top: 0; left: 0; right: 0; height: var(--sat, env(safe-area-inset-top, 0px)); background: #121215;
     opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 30; }
   .cover-gone .statusbar-shade { opacity: 1; }
   /* Toolbar: participants and costs on the left, actions on the right. Sticks to the top once the title page is gone. */
@@ -243,7 +244,7 @@
     .masthead { max-width: none; padding: 0; }
     .masthead > h1, .masthead > .motto, .masthead > .banner { display: none; }
     .cover { display: block; position: relative; }
-    .cover-art { display: block; width: 100%; height: auto; }
+    .cover-art { display: block; width: 100%; height: auto; aspect-ratio: 1320 / 2198; }
     /* Logo and motto as placed in the mockup: 33 of 440 points from the left, 98 from the top, 373 wide. */
     .masthead .cover h1 { position: absolute; display: block; margin: 0; left: 7.5%; top: 13.33%; width: 84.77%; line-height: 0; }
     .masthead .cover h1 img { display: block; width: 100%; height: auto; }
@@ -1941,6 +1942,10 @@
   }
   if (masthead && shade) {
     ['scroll', 'resize', 'load'].forEach(ev => window.addEventListener(ev, updateShade, { passive: true }));
+    // Check again when the cover changes size (the painting arriving), not only when the page scrolls.
+    if ('ResizeObserver' in window) new ResizeObserver(updateShade).observe(masthead);
+    const art = document.querySelector('.cover-art');
+    if (art) art.addEventListener('load', updateShade);
     updateShade();
   }
   // Leaving the page or switching apps on the phone: save now. Coming back: fetch what the other device did.
