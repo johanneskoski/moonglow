@@ -1,0 +1,1954 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f2ec">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141417">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Moonglow">
+<meta name="robots" content="noindex, nofollow">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Moonglow</title>
+<!-- Favicon: the moon on the staff in Aion's painting, drawn by Claude, moon at 90 % on Johannes's suggestion (6.11.2026). -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Cdefs%3E%3CradialGradient id=%22glow%22 cx=%2250%%22 cy=%2250%%22 r=%2250%%22%3E%3Cstop offset=%220%22 stop-color=%22%23fff2cf%22 stop-opacity=%22.8%22/%3E%3Cstop offset=%22.5%22 stop-color=%22%23ffd98a%22 stop-opacity=%22.25%22/%3E%3Cstop offset=%221%22 stop-color=%22%23ffb347%22 stop-opacity=%220%22/%3E%3C/radialGradient%3E%3CradialGradient id=%22moon%22 cx=%2240%%22 cy=%2236%%22 r=%2270%%22%3E%3Cstop offset=%220%22 stop-color=%22%23ffffff%22/%3E%3Cstop offset=%22.65%22 stop-color=%22%23f3e9d2%22/%3E%3Cstop offset=%221%22 stop-color=%22%23c9b48a%22/%3E%3C/radialGradient%3E%3ClinearGradient id=%22gold%22 x1=%220%22 y1=%220%22 x2=%220%22 y2=%221%22%3E%3Cstop offset=%220%22 stop-color=%22%23fff4c8%22/%3E%3Cstop offset=%22.4%22 stop-color=%22%23e8bd5a%22/%3E%3Cstop offset=%22.78%22 stop-color=%22%23a8722a%22/%3E%3Cstop offset=%221%22 stop-color=%22%23f6d98e%22/%3E%3C/linearGradient%3E%3Cmask id=%22cut%22%3E%3Crect width=%2264%22 height=%2264%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2232%22 cy=%2228%22 r=%2220%22 fill=%22%23000%22/%3E%3C/mask%3E%3C/defs%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%23141417%22/%3E%3Ccircle cx=%2232%22 cy=%2228%22 r=%2220%22 fill=%22url(%23glow)%22/%3E%3Ccircle cx=%2232%22 cy=%2229%22 r=%2210.8%22 fill=%22url(%23moon)%22/%3E%3Ccircle cx=%2232%22 cy=%2234%22 r=%2222%22 fill=%22url(%23gold)%22 mask=%22url(%23cut)%22/%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f5f2ec;
+    --panel: #ffffff;
+    --panel-2: #faf8f4;
+    --ink: #1f1c18;
+    --muted: #6d675e;
+    --line: #e3ddd2;
+    --focus: #3b6fd8;
+    --human: #a67c3d;
+    --danger: #b3412e;
+    --ok: #2e7d4f;
+    --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 24px rgba(0,0,0,.06);
+    --radius: 14px;
+    --motto: #5a5e94;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141417;
+      --panel: #1d1d22;
+      --panel-2: #222228;
+      --ink: #ebe9e4;
+      --muted: #9b978f;
+      --line: #2f2f37;
+      --focus: #7aa2ff;
+      --human: #d4a85f;
+      --danger: #e2735f;
+      --ok: #5fbf87;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.35);
+      --motto: #7b80b5;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141417; --panel: #1d1d22; --panel-2: #222228; --ink: #ebe9e4; --muted: #9b978f;
+    --line: #2f2f37; --focus: #7aa2ff; --human: #d4a85f; --danger: #e2735f; --ok: #5fbf87;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.35);
+    --motto: #7b80b5;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex; flex-direction: column; min-height: 100vh;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* Title page (Johannes's mockup 6.11.2026): logo, motto and Aion's painting scroll away like a book's title page. */
+  .masthead { width: 100%; max-width: 880px; margin: 0 auto; padding: 22px 16px 0; text-align: center; }
+  .masthead h1 { margin: 0; display: flex; justify-content: center; font-size: 34px; line-height: 68px; letter-spacing: -.01em; }
+  .masthead h1 img { display: block; width: 289px; max-width: 100%; height: auto; }
+  .masthead .motto { margin: 9px 0 0; color: var(--motto); font-size: 13px; line-height: 18px; }
+  .masthead .banner { display: block; width: 100%; height: auto; margin-top: 13px; border-radius: var(--radius); }
+  /* Toolbar: participants and costs on the left, actions on the right. Sticks to the top once the title page is gone. */
+  header.top {
+    position: sticky; top: 0; z-index: 5;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid transparent; transition: border-color .2s;
+  }
+  header.top.stuck { border-bottom-color: var(--line); }
+  .top-inner {
+    max-width: 880px; margin: 0 auto; padding: 12px 16px 10px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  }
+  .top-inner .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .top-inner .bar.status { gap: 6px; }
+  .chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--line); background: var(--panel);
+    border-radius: 999px; padding: 3px 9px 3px 7px; font-size: 13px;
+  }
+  .chip[aria-pressed="false"] { opacity: .45; }
+  .chip .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+  .meter {
+    font-variant-numeric: tabular-nums; font-size: 13px; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 999px; padding: 3px 9px; background: var(--panel);
+  }
+  .meter strong { color: var(--ink); font-weight: 600; }
+  .icon-btn {
+    border: 1px solid var(--line); background: var(--panel); border-radius: 10px;
+    padding: 6px 10px; font-size: 13px;
+  }
+  .icon-btn:hover { background: var(--panel-2); }
+
+  /* Log */
+  main { flex: 1; width: 100%; max-width: 880px; margin: 0 auto; padding: 4px 16px 8px; }
+  #log { display: flex; flex-direction: column; gap: 12px; }
+  .msg {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 12px 16px 12px 18px; position: relative; box-shadow: var(--shadow);
+    overflow-wrap: anywhere;
+  }
+  .msg::before {
+    content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 4px;
+    border-radius: 0 4px 4px 0; background: var(--c, var(--muted));
+  }
+  .msg.human { background: var(--panel-2); }
+  .msg .head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .msg .name { font-weight: 650; color: var(--c, var(--ink)); }
+  .msg .name.blind { cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+  .msg .model, .msg .meta { color: var(--muted); font-size: 12px; }
+  .msg .meta { margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .msg .body p { margin: .35em 0; }
+  .msg .body ul, .msg .body ol { margin: .35em 0; padding-left: 1.3em; }
+  .msg .body h4 { margin: .6em 0 .2em; font-size: 15px; }
+  .msg .body blockquote { margin: .4em 0; padding-left: 10px; border-left: 3px solid var(--line); color: var(--muted); }
+  .msg .body pre { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; overflow-x: auto; font-size: 13px; }
+  .msg .body code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92em; }
+  .msg .body a { color: var(--focus); }
+  .msg .error { color: var(--danger); }
+  .typing { color: var(--muted); font-style: italic; }
+  .typing::after { content: "…"; animation: dots 1.2s steps(3) infinite; display: inline-block; width: 1.2em; overflow: hidden; vertical-align: bottom; }
+  @keyframes dots { from { width: 0 } to { width: 1.2em } }
+
+  .welcome {
+    background: var(--panel); border: 1px dashed var(--line); border-radius: var(--radius);
+    padding: 18px; color: var(--muted);
+  }
+  .welcome h2 { margin: 0 0 6px; font-size: 16px; color: var(--ink); }
+  .welcome p { margin: 6px 0; }
+  .welcome .principle { margin: 0 0 10px; color: var(--motto); font-style: italic; }
+  .starters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .starter {
+    border: 1px solid var(--line); background: var(--panel-2); border-radius: 10px;
+    padding: 7px 10px; font-size: 13px; text-align: left; color: var(--ink);
+  }
+  .starter:hover { border-color: var(--muted); }
+
+  /* Composer */
+  footer.composer {
+    position: sticky; bottom: 0; z-index: 5;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+  }
+  .composer-inner { max-width: 880px; margin: 0 auto; padding: 10px 16px 14px; }
+  textarea#input {
+    width: 100%; min-height: 64px; max-height: 40vh; resize: vertical;
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+    background: var(--panel);
+  }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+  .btn {
+    border: 1px solid var(--line); background: var(--panel); border-radius: 10px;
+    padding: 8px 12px; font-weight: 550;
+  }
+  .btn:hover:not(:disabled) { background: var(--panel-2); }
+  .btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .btn.primary:hover:not(:disabled) { opacity: .9; background: var(--ink); }
+  .btn.stop { border-color: var(--danger); color: var(--danger); }
+  .btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .group { display: inline-flex; align-items: center; gap: 6px; }
+  select, input[type="number"], input[type="text"], input[type="password"] {
+    border: 1px solid var(--line); border-radius: 10px; padding: 7px 9px; background: var(--panel);
+  }
+  input[type="number"] { width: 4.2em; }
+  .spacer { flex: 1; }
+  .hint { color: var(--muted); font-size: 12px; }
+  .status { color: var(--muted); font-size: 12px; min-height: 1.2em; margin-top: 6px; }
+
+  /* Settings dialog */
+  dialog {
+    border: 1px solid var(--line); border-radius: 16px; padding: 0; width: min(720px, calc(100vw - 32px));
+    background: var(--panel); color: var(--ink); box-shadow: var(--shadow);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  .dlg-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .dlg-head h2 { margin: 0; font-size: 17px; }
+  .dlg-body { padding: 14px 18px; max-height: 70vh; overflow: auto; }
+  .dlg-foot { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 18px; border-top: 1px solid var(--line); }
+  fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 12px; margin: 0 0 12px; }
+  legend { padding: 0 6px; font-weight: 650; }
+  label.f { display: block; margin: 8px 0 4px; font-size: 13px; color: var(--muted); }
+  .f-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .f-row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .full { width: 100%; }
+  textarea.full { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--panel); resize: vertical; }
+  .seat-head { display: flex; align-items: center; gap: 8px; }
+  .seat-head .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--c); }
+  .price { font-size: 12px; color: var(--muted); margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .keystate { font-size: 12px; margin-top: 6px; }
+  .keystate.ok { color: var(--ok); }
+  .keystate.bad { color: var(--danger); }
+  details { margin-top: 8px; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+  details pre { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; overflow-x: auto; font-size: 12px; }
+  .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+
+  /* Images */
+  .tray { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tray:empty { display: none; }
+  .thumb { position: relative; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--panel-2); }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb button {
+    position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%;
+    border: 0; background: rgba(0,0,0,.65); color: #fff; font-size: 13px; line-height: 22px; padding: 0;
+  }
+  .msg .imgs { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 2px; }
+  .msg .imgs img {
+    max-width: 100%; max-height: 320px; border-radius: 10px; border: 1px solid var(--line);
+    cursor: zoom-in; display: block;
+  }
+  .msg .imgs img.zoom { max-height: none; width: 100%; cursor: zoom-out; }
+  textarea#input.drag { border-color: var(--focus); border-style: dashed; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 150px; transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 10px; font-size: 14px;
+    opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50; max-width: calc(100vw - 32px);
+  }
+  .toast.show { opacity: 1; }
+
+  .composer-inner { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+  @media (max-width: 760px) {
+    .masthead { padding-top: 16px; }
+    /* Phones: the toolbar stays under the title page instead of following along, and the composer buttons
+       fit on one row you can swipe sideways, so most of the screen is left for reading. */
+    header.top { position: static; }
+    .top-inner { justify-content: flex-start; padding: 10px 16px 4px; gap: 6px; }
+    .top-inner .bar { gap: 6px; }
+    .composer-inner .row::-webkit-scrollbar { display: none; }
+    /* iPhone zooms into fields with text smaller than 16px. */
+    textarea, input, select { font-size: 16px; }
+    .composer-inner { padding: 8px 16px calc(8px + env(safe-area-inset-bottom)); }
+    textarea#input { min-height: 44px; height: 44px; padding: 9px 12px; resize: none; }
+    .composer-inner .row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 6px; margin-top: 6px; }
+    .composer-inner .row > * { flex: none; }
+    .composer-inner .btn { padding: 7px 11px; white-space: nowrap; }
+    .composer-inner .hint { display: none; }
+    .status:empty { display: none; }
+    .toast { bottom: calc(120px + env(safe-area-inset-bottom)); }
+  }
+  @media (max-width: 560px) {
+    .f-row, .f-row3 { grid-template-columns: 1fr; }
+    .btn { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="masthead">
+  <h1><img src="moonglow_logo.png" width="289" height="68" alt="Moonglow" onerror="this.replaceWith('Moonglow')"></h1>
+  <p class="motto">Samojen tähtien alla.</p>
+  <img class="banner" src="sunset_fellowship.jpg" width="850" height="345" alt="Aionin maalaus: neljä kulkijaa merenrannan kalliolla katsoo auringonlaskua." onerror="this.remove()">
+</div>
+<header class="top">
+  <div class="top-inner">
+    <div class="bar status">
+      <div class="chips" id="chips" aria-label="Osallistujat"></div>
+      <span class="meter" id="meter" title="Tämän huoneen kulut yhteensä">Kulut <strong id="costTotal">$0.00</strong></span>
+    </div>
+    <div class="bar">
+      <button class="icon-btn" id="btnExport" type="button">Vie (.md)</button>
+      <button class="icon-btn" id="btnFolder" type="button">Yhdistä kansio</button>
+      <button class="icon-btn" id="btnSettings" type="button">Asetukset</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="log" aria-live="polite"></div>
+</main>
+
+<footer class="composer">
+  <div class="composer-inner">
+    <div class="tray" id="tray" aria-label="Liitetyt kuvat"></div>
+    <textarea id="input" placeholder="Kirjoita huoneeseen… (⌘/Ctrl + Enter: kaikki vastaavat). Kuvan voi liittää, vetää tai liittää leikepöydältä."></textarea>
+    <input type="file" id="fileInput" accept="image/*" multiple hidden>
+    <div class="row">
+      <button class="btn" id="btnAttach" type="button" title="Liitä kuva">📎 Kuva</button>
+      <button class="btn primary" id="btnAll" type="button">Kaikki vastaavat</button>
+      <span class="group">
+        <select id="askWho" aria-label="Kenelle"></select>
+        <button class="btn" id="btnAsk" type="button">Vain hän</button>
+      </span>
+      <span class="group">
+        <button class="btn" id="btnRounds" type="button">Keskustelkaa</button>
+        <input type="number" id="rounds" min="1" max="20" value="2" aria-label="Kierrosten määrä">
+        <span class="hint">kierrosta</span>
+      </span>
+      <button class="btn" id="btnNotes" type="button" title="Jokainen kirjoittaa omalle muistisivulleen, mitä haluaa muistaa tästä illasta">Illan muistot</button>
+      <button class="btn stop" id="btnStop" type="button" hidden>Pysäytä</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+</footer>
+
+<dialog id="dlg">
+  <form method="dialog" id="settingsForm">
+    <div class="dlg-head">
+      <h2>Asetukset</h2>
+      <button class="icon-btn" type="button" data-close>Sulje</button>
+    </div>
+    <div class="dlg-body">
+      <fieldset>
+        <legend>OpenRouter-avain</legend>
+        <input type="password" id="apiKey" class="full" placeholder="sk-or-…" autocomplete="off" spellcheck="false">
+        <div class="row" style="margin-top:6px">
+          <label class="check"><input type="checkbox" id="rememberKey"> Muista avain tällä koneella</label>
+          <span class="spacer"></span>
+          <button class="btn" type="button" id="btnCheckKey">Tarkista avain</button>
+        </div>
+        <div class="keystate" id="keyState"></div>
+        <p class="hint">Avain lähtee vain OpenRouterille. Kulukaton voit asettaa avaimelle OpenRouterissa, ja ennakkoon ostetut krediitit toimivat jo itsessään kattona, kun automaattinen täydennys on pois päältä.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Muisti GitHubissa</legend>
+        <p class="hint">Muistisivut, keskustelut ja yhteiset asetukset tallentuvat yksityiseen GitHub-repoon, jotta sama huone toimii puhelimella ja Macilla. OpenRouter-avain ei mene repoon. GitHub-tunnus jää vain tähän selaimeen.</p>
+        <label class="f" for="ghRepo">Repo (omistaja/nimi)</label>
+        <input type="text" id="ghRepo" class="full" placeholder="käyttäjänimi/moonglow-muisti" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <label class="f" for="ghToken">GitHub-tunnus</label>
+        <input type="password" id="ghToken" class="full" placeholder="github_pat_…" autocomplete="off" spellcheck="false">
+        <div class="row" style="margin-top:6px">
+          <button class="btn" type="button" id="btnGhForget">Unohda yhteys</button>
+          <span class="spacer"></span>
+          <button class="btn" type="button" id="btnGhTest">Testaa yhteys</button>
+        </div>
+        <div class="keystate" id="ghState"></div>
+      </fieldset>
+
+      <div id="seatFields"></div>
+
+      <fieldset>
+        <legend>Huone</legend>
+        <label class="f" for="roomPrompt">Huoneen yhteinen ohje (kaikki näkevät tämän; {osallistujat} korvautuu nimillä)</label>
+        <textarea id="roomPrompt" class="full" rows="9"></textarea>
+        <div class="f-row3">
+          <div>
+            <label class="f" for="maxTokens">Vastauksen enimmäispituus (tokenia)</label>
+            <input type="number" id="maxTokens" min="100" max="8000" step="100" style="width:100%">
+          </div>
+          <div>
+            <label class="f" for="memory">Muisti (viimeiset puheenvuorot)</label>
+            <input type="number" id="memory" min="4" max="200" style="width:100%">
+          </div>
+          <div>
+            <label class="f" for="temperature">Lämpötila (0–1.5)</label>
+            <input type="number" id="temperature" min="0" max="1.5" step="0.1" style="width:100%">
+          </div>
+        </div>
+        <div class="f-row">
+          <div>
+            <label class="f" for="order">Puhejärjestys</label>
+            <select id="order" class="full">
+              <option value="rotate">Vaihtuva (aloittaja kiertää)</option>
+              <option value="fixed">Aina sama järjestys</option>
+            </select>
+          </div>
+          <div>
+            <label class="f" for="blind">Sokkotesti</label>
+            <select id="blind" class="full">
+              <option value="off">Nimet näkyvät</option>
+              <option value="on">Piilota nimet (klikkaa paljastaaksesi)</option>
+            </select>
+          </div>
+        </div>
+        <details>
+          <summary>Jos yhteys ei toimi suoraan tiedostosta avattuna</summary>
+          <p class="hint">Jotkin selaimet estävät verkkoyhteydet levyltä avatuista tiedostoista. Silloin avaa Pääte samassa kansiossa ja aja:</p>
+          <pre>python3 -m http.server 8765</pre>
+          <p class="hint">Avaa sitten selaimessa <code>http://localhost:8765/Moonglow.html</code>. Avain pitää tällöin syöttää kerran uudelleen.</p>
+        </details>
+      </fieldset>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn danger" id="btnClear" type="button" title="Tyhjentää huoneen keskustelun ja kululaskurin. Kun kansio on yhdistetty, keskustelu on jo tallessa Keskustelut-kansiossa.">Tyhjennä huone</button>
+      <span class="spacer"></span>
+      <button class="btn" type="button" data-close>Peruuta</button>
+      <button class="btn primary" id="btnSave" value="save" type="submit">Tallenna</button>
+    </div>
+  </form>
+</dialog>
+
+<datalist id="modelList"></datalist>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const API = 'https://openrouter.ai/api/v1';
+  const K = {
+    settings: 'palaverihuone.v1.settings',
+    transcript: 'palaverihuone.v1.transcript',
+    key: 'palaverihuone.v1.key',
+    cost: 'palaverihuone.v1.cost',
+    session: 'palaverihuone.v1.session',
+    github: 'palaverihuone.v1.github',
+    updated: 'palaverihuone.v1.updated',
+    settingsUpdated: 'palaverihuone.v1.settingsUpdated',
+    logDirty: 'palaverihuone.v1.logDirty',
+  };
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+  };
+
+  const DEFAULT_ROOM = [
+    'Olette Moonglow’ssa, Johanneksen ja tekoälyjen yhteisessä huoneessa. Paikalla ovat: {osallistujat}.',
+    '',
+    'Johannes on ihminen ja huoneen puheenjohtaja. Muut ovat eri valmistajien tekoälyjä. Keskustelkaa suomeksi, ellei Johannes pyydä muuta.',
+    '',
+    'Pelisäännöt:',
+    '- Puhu vain omasta puolestasi. Älä kirjoita muiden osallistujien puheenvuoroja.',
+    '- Muiden viestit näkyvät sinulle muodossa [Nimi]: teksti. Älä aloita omaa viestiäsi nimelläsi.',
+    '- Kuuntele muita ja viittaa heidän puheenvuoroihinsa, kun se on luontevaa. Saat olla eri mieltä, kunhan perustelet ystävällisesti.',
+    '- Pidä puheenvuorot tiiviinä kuin oikeassa palaverissa. Yleensä muutama kappale riittää.',
+    '- Ole rehellinen siitä, mitä et tiedä, äläkä keksi faktoja.',
+    '- Huumori on tervetullutta.',
+  ].join('\n');
+
+  const DEFAULTS = {
+    roomPrompt: DEFAULT_ROOM,
+    maxTokens: 1500,
+    memory: 40,
+    temperature: 0.8,
+    order: 'rotate',
+    blind: 'off',
+    seats: [
+      { id: 's0', name: 'Claude', color: '#d97757', model: '', enabled: true, reasoning: 'default', persona: '',
+        prefer: ['anthropic/claude-opus-5.5', 'anthropic/claude-sonnet-5.5', 'anthropic/claude-opus-5', 'anthropic/claude-sonnet-5', 'anthropic/claude-opus', 'anthropic/claude-sonnet'] },
+      { id: 's1', name: 'Aion', color: '#19a67e', model: '', enabled: true, reasoning: 'default', persona: 'Johannes tuntee sinut nimellä Aion.',
+        prefer: ['openai/gpt-6', 'openai/gpt-6-astra', 'openai/gpt-6-', 'openai/gpt-5.5', 'openai/gpt-5'] },
+      { id: 's2', name: 'Grok', color: '#7c8cff', model: '', enabled: true, reasoning: 'default', persona: '',
+        prefer: ['x-ai/grok-5', 'x-ai/grok-4.7', 'x-ai/grok-4.6', 'x-ai/grok-4.5', 'x-ai/grok-4'] },
+    ],
+  };
+
+  const HUMAN = { id: 'human', name: 'Johannes', color: 'var(--human)' };
+
+  const STARTERS = [
+    'Hei kaikki! Esittäytykää toisillenne lyhyesti: keitä olette ja mikä teissä on erilaista kuin kahdessa muussa?',
+    'Väittely: voiko tekoälyllä olla hyvinvointia, jota pitäisi suojella? Ottakaa kukin oma kantanne ja perustelkaa.',
+    'Improvisaatio: kirjoittakaa kukin yksi stand up -vitsi aiheesta "kierrätyskeskus". Johannes toimii tuomarina.',
+    'Pelataan: Grok esittää vuoden 1966 ELIZA-ohjelmaa ja vastaa vain sen tyyliin. Claude ja Aion kertovat ELIZAlle huolistaan.',
+    'Ketjutarina: kirjoittakaa vuorotellen yksi kappale scifi-tarinaan, joka alkaa Repovedellä revontulien alla.',
+  ];
+
+  // ---------- State ----------
+  const state = {
+    settings: mergeSettings(store.get(K.settings, null)),
+    transcript: store.get(K.transcript, []),
+    key: store.get(K.key, '') || '',
+    totalCost: Number(store.get(K.cost, 0)) || 0,
+    models: {},           // id -> {pricing:{prompt,completion}, name}
+    modelsLoaded: false,
+    running: false,
+    abort: null,
+    rotate: 0,
+    revealed: new Set(),
+    pendingImages: [],    // data URLs waiting to be sent
+    dir: null,            // FileSystemDirectoryHandle of the Palaverihuone folder
+    dirOk: false,         // read/write permission granted
+    pages: { room: '', seats: {} },  // memory pages read from the folder
+    session: store.get(K.session, null),  // { started } names the autosave file
+    savedAt: null,
+    gh: store.get(K.github, null),   // web version: { repo: 'owner/name', token, joining } of the private memory repo
+    ghOk: false,
+    ghConnecting: false,
+    ghError: '',
+    roomUpdated: Number(store.get(K.updated, 0)) || 0,            // when this device last changed the room
+    settingsUpdated: Number(store.get(K.settingsUpdated, 0)) || 0,
+    roomSyncedAt: null,
+  };
+  if (state.transcript.length && !state.session) state.session = { started: state.transcript[0].ts || Date.now() };
+  // Restore: any message left pending from a reload is closed.
+  state.transcript.forEach(m => { if (m.pending) { m.pending = false; m.note = m.note || 'keskeytetty'; } });
+
+  function mergeSettings(saved) {
+    const base = JSON.parse(JSON.stringify(DEFAULTS));
+    if (!saved || typeof saved !== 'object') return base;
+    const out = Object.assign(base, saved);
+    out.seats = DEFAULTS.seats.map((d, i) => Object.assign({}, d, (saved.seats || [])[i] || {}, { id: d.id, prefer: d.prefer }));
+    return out;
+  }
+
+  // ---------- Helpers ----------
+  const $ = sel => document.querySelector(sel);
+  const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  const seatById = id => state.settings.seats.find(s => s.id === id);
+  const enabledSeats = () => state.settings.seats.filter(s => s.enabled && s.model);
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const fmtCost = c => '$' + (c < 0.01 ? c.toFixed(4) : c.toFixed(3));
+  const fmtInt = n => Number(n || 0).toLocaleString('fi-FI');
+
+  function saveSettings() { store.set(K.settings, state.settings); }
+  let warnedFull = false;
+  function saveTranscript() {
+    const ok = store.set(K.transcript, state.transcript);
+    store.set(K.cost, state.totalCost);
+    if (state.transcript.length && !state.session) { state.session = { started: Date.now() }; store.set(K.session, state.session); }
+    state.roomUpdated = Date.now(); store.set(K.updated, state.roomUpdated);
+    if (state.transcript.length) store.set(K.logDirty, true);  // the readable log is behind until autosave has run
+    scheduleAutosave();
+    scheduleRoomPush();
+    if (!ok && !warnedFull) {
+      warnedFull = true;
+      toast('Selaimen tallennustila on täynnä. Vie keskustelu talteen (.md) ja tyhjennä huone, jotta uudet viestit säilyvät.');
+    }
+  }
+
+  let toastTimer = null;
+  function toast(text) {
+    const t = $('#toast');
+    t.textContent = text; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+  }
+  function setStatus(text) { $('#status').textContent = text || ''; }
+
+  // ---------- Markdown (small, safe) ----------
+  function inline(s) {
+    return s
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|[^*\w])\*([^*\n]+)\*(?!\w)/g, '$1<em>$2</em>')
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  }
+  function md(src) {
+    const blocks = [];
+    src = String(src || '').replace(/```[^\n]*\n?([\s\S]*?)```/g, (m, code) => {
+      blocks.push('<pre><code>' + esc(code) + '</code></pre>');
+      return '\u0000' + (blocks.length - 1) + '\u0000';
+    });
+    const lines = esc(src).split('\n');
+    const out = [];
+    let para = [], list = null, items = [], quote = [];
+    const flushPara = () => { if (para.length) { out.push('<p>' + para.map(inline).join('<br>') + '</p>'); para = []; } };
+    const flushList = () => { if (list) { out.push('<' + list + '>' + items.map(i => '<li>' + inline(i) + '</li>').join('') + '</' + list + '>'); list = null; items = []; } };
+    const flushQuote = () => { if (quote.length) { out.push('<blockquote>' + quote.map(inline).join('<br>') + '</blockquote>'); quote = []; } };
+    const flushAll = () => { flushPara(); flushList(); flushQuote(); };
+    for (const line of lines) {
+      let m;
+      if (/^\u0000\d+\u0000$/.test(line.trim())) { flushAll(); out.push(line.trim()); }
+      else if ((m = line.match(/^#{1,6}\s+(.*)$/))) { flushAll(); out.push('<h4>' + inline(m[1]) + '</h4>'); }
+      else if ((m = line.match(/^\s*[-*•]\s+(.*)$/))) { flushPara(); flushQuote(); if (list !== 'ul') { flushList(); list = 'ul'; } items.push(m[1]); }
+      else if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/))) { flushPara(); flushQuote(); if (list !== 'ol') { flushList(); list = 'ol'; } items.push(m[1]); }
+      else if ((m = line.match(/^&gt;\s?(.*)$/))) { flushPara(); flushList(); quote.push(m[1]); }
+      else if (!line.trim()) { flushAll(); }
+      else { flushList(); flushQuote(); para.push(line); }
+    }
+    flushAll();
+    return out.join('').replace(/\u0000(\d+)\u0000/g, (m, i) => blocks[Number(i)] || '');
+  }
+
+  // ---------- Rendering ----------
+  function seatLetter(id) { return 'Osallistuja ' + 'ABCDEFG'[state.settings.seats.findIndex(s => s.id === id)]; }
+
+  function msgLabel(m) {
+    if (m.speaker === 'human') return { name: HUMAN.name, color: HUMAN.color, blind: false };
+    const blind = state.settings.blind === 'on' && !state.revealed.has(m.id);
+    return blind ? { name: seatLetter(m.speaker), color: 'var(--muted)', blind: true }
+                 : { name: m.name, color: m.color, blind: false };
+  }
+
+  function msgHTML(m) {
+    const lab = msgLabel(m);
+    const model = (m.speaker !== 'human' && !lab.blind && m.model) ? '<span class="model">' + esc(m.model) + '</span>' : '';
+    let body;
+    if (m.error) body = '<p class="error">' + esc(m.error) + '</p>';
+    else if (m.pending && !m.text) body = '<p class="typing">' + (m.thinking ? 'ajattelee' : 'kirjoittaa') + '</p>';
+    else body = md(cleanOutput(m.text, m.speaker === 'human' ? null : seatById(m.speaker)));
+    if (Array.isArray(m.images) && m.images.length) {
+      body += '<div class="imgs">' + m.images.map(src =>
+        /^data:image\/[a-z+.-]+;base64,/i.test(src) ? '<img src="' + src + '" alt="Johanneksen liittämä kuva" loading="lazy">' : ''
+      ).join('') + '</div>';
+    }
+    const metaBits = [];
+    if (m.note) metaBits.push(m.note);
+    if (m.usage) metaBits.push(fmtInt(m.usage.prompt_tokens) + ' → ' + fmtInt(m.usage.completion_tokens) + ' tokenia');
+    if (typeof m.cost === 'number') metaBits.push(fmtCost(m.cost));
+    const meta = metaBits.length ? '<div class="meta">' + esc(metaBits.join(' · ')) + '</div>' : '';
+    return '<div class="head"><span class="name' + (lab.blind ? ' blind' : '') + '" data-reveal="' + esc(m.id) + '"' +
+           (lab.blind ? ' title="Paljasta"' : '') + '>' + esc(lab.name) + '</span>' + model + '</div>' +
+           '<div class="body">' + body + '</div>' + meta;
+  }
+
+  function renderMsg(m) {
+    let el = document.getElementById('m-' + m.id);
+    const lab = msgLabel(m);
+    if (!el) {
+      el = document.createElement('article');
+      el.id = 'm-' + m.id;
+      $('#log').appendChild(el);
+    }
+    el.className = 'msg' + (m.speaker === 'human' ? ' human' : '');
+    el.style.setProperty('--c', lab.color);
+    el.innerHTML = msgHTML(m);
+    return el;
+  }
+
+  function renderAll() {
+    const log = $('#log');
+    log.innerHTML = '';
+    if (!state.transcript.length) { log.appendChild(welcomeEl()); return; }
+    state.transcript.forEach(renderMsg);
+  }
+
+  function welcomeEl() {
+    const w = document.createElement('section');
+    w.className = 'welcome';
+    const names = state.settings.seats.map(s => s.name).join(', ');
+    w.innerHTML =
+      '<h2>Tervetuloa Moonglow’hun</h2>' +
+      '<p class="principle">Moonglow — missä rehellisyys on ymmärryksen alku, ei ihmettelyn loppu.</p>' +
+      '<p>Paikalla ovat ' + esc(names) + ' ja sinä puheenjohtajana. Kirjoita aloitus ja valitse, vastaavatko kaikki, vain yksi, vai annatko heidän keskustella keskenään muutaman kierroksen.</p>' +
+      (state.key ? '' : '<p><strong>Aloita lisäämällä OpenRouter-avain asetuksista.</strong></p>') +
+      (memReady() || state.ghConnecting ? '' : ghCfg() ? '<p>Muistiin ei saatu yhteyttä. Tarkista repo ja tunnus asetuksista.</p>'
+        : !LOCAL ? '<p>Yhdistä muisti asetuksista, niin muistisivut ja keskustelut kulkevat puhelimen ja Macin välillä.</p>'
+        : FS_OK ? '<p>Yhdistä Palaverihuone-kansio yläpalkista, niin muistisivut ja keskustelujen automaattinen tallennus ovat käytössä.</p>' : '') +
+      '<p>Aloitusideoita:</p><div class="starters"></div>';
+    const box = w.querySelector('.starters');
+    STARTERS.forEach(s => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'starter'; b.textContent = s;
+      b.addEventListener('click', () => { const i = $('#input'); i.value = s; i.focus(); });
+      box.appendChild(b);
+    });
+    return w;
+  }
+
+  function renderChips() {
+    const box = $('#chips');
+    box.innerHTML = '';
+    state.settings.seats.forEach(s => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip';
+      b.style.setProperty('--c', s.color);
+      b.setAttribute('aria-pressed', String(!!s.enabled));
+      b.title = (s.enabled ? 'Mukana' : 'Poissa') + (s.model ? ' · ' + s.model : ' · malli puuttuu') + ' (klikkaa vaihtaaksesi)';
+      b.innerHTML = '<span class="dot"></span>' + esc(s.name);
+      b.addEventListener('click', () => { s.enabled = !s.enabled; saveSettings(); renderChips(); renderAskWho(); });
+      box.appendChild(b);
+    });
+  }
+
+  function renderAskWho() {
+    const sel = $('#askWho');
+    const prev = sel.value;
+    sel.innerHTML = '';
+    state.settings.seats.forEach(s => {
+      const o = document.createElement('option');
+      o.value = s.id; o.textContent = s.name + (s.enabled ? '' : ' (poissa)');
+      sel.appendChild(o);
+    });
+    if (prev && seatById(prev)) sel.value = prev;
+  }
+
+  function renderCost() {
+    // Total with two decimals, so $4.883 is never read as 4 883 dollars; the exact sum stays in the tooltip.
+    $('#costTotal').textContent = '$' + state.totalCost.toFixed(2);
+    $('#meter').title = 'Tämän huoneen kulut yhteensä: ' + fmtCost(state.totalCost);
+  }
+
+  function scrollToEnd() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
+
+  // ---------- Models ----------
+  async function loadModels() {
+    try {
+      const res = await fetch(API + '/models');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const json = await res.json();
+      const list = Array.isArray(json.data) ? json.data : [];
+      state.models = {};
+      list.forEach(m => { if (m && m.id) state.models[m.id] = { pricing: m.pricing || {}, name: m.name || m.id }; });
+      state.modelsLoaded = true;
+      const dl = $('#modelList');
+      dl.innerHTML = '';
+      Object.keys(state.models).sort().forEach(id => {
+        const o = document.createElement('option'); o.value = id; dl.appendChild(o);
+      });
+      let changed = false;
+      state.settings.seats.forEach(s => {
+        if (!s.model || !state.models[s.model]) {
+          const r = resolveModel(s.prefer, Object.keys(state.models));
+          if (r && r !== s.model && (!s.model || s.autoModel)) { s.model = r; s.autoModel = true; changed = true; }
+        }
+      });
+      if (changed) saveSettings();
+      renderChips(); renderAskWho();
+      if ($('#dlg').open) fillSeatPrices();
+    } catch (e) {
+      state.modelsLoaded = false;
+      setStatus('Mallilistaa ei saatu haettua (' + e.message + '). Voit kirjoittaa mallin tunnisteen asetuksiin käsin.');
+    }
+  }
+
+  function resolveModel(prefer, ids) {
+    const clean = ids.filter(id => !id.includes(':'));
+    for (const p of prefer) if (clean.includes(p)) return p;
+    for (const p of prefer) {
+      const c = clean.filter(id => id.startsWith(p)).sort((a, b) => a.length - b.length || a.localeCompare(b));
+      if (c.length) return c[0];
+    }
+    return '';
+  }
+
+  function priceText(id) {
+    const m = state.models[id];
+    if (!m) return state.modelsLoaded ? 'Mallia ei löytynyt OpenRouterin listasta.' : '';
+    const p = parseFloat(m.pricing.prompt), c = parseFloat(m.pricing.completion);
+    if (!isFinite(p) || !isFinite(c)) return '';
+    return 'Hinta: $' + (p * 1e6).toFixed(2) + ' sisään / $' + (c * 1e6).toFixed(2) + ' ulos per miljoona tokenia';
+  }
+
+  // ---------- Conversation building ----------
+  function participantsText() {
+    const parts = ['Johannes (ihminen, puheenjohtaja)'];
+    enabledSeats().forEach(s => parts.push(s.name + ' (' + s.model + ')'));
+    return parts.join(', ');
+  }
+
+  function buildMessages(seat, extra) {
+    // Stable parts first, so the providers can cache them between turns.
+    const sysParts = [state.settings.roomPrompt.replace(/\{osallistujat\}/g, participantsText())];
+    if (state.pages.room) sysParts.push('## Huoneen yhteinen muistisivu\n\n' + state.pages.room);
+    sysParts.push('Sinä olet ' + seat.name + ' (' + seat.model + ').' + (seat.persona ? '\n' + seat.persona : ''));
+    const page = state.pages.seats[seat.id];
+    if (page) sysParts.push('## Sinun muistisivusi\n\nTämän sivun ovat kirjoittaneet aiempi ' + seat.name + ' ja Johannes. Se on lähtökohta, ei käsikirjoitus.\n\n' + page);
+    const sys = sysParts.join('\n\n');
+    const hasContent = m => (m.text || '').trim() || (Array.isArray(m.images) && m.images.length);
+    const recent = state.transcript.filter(m => !m.error && hasContent(m)).slice(-Math.max(4, state.settings.memory | 0));
+    // Each message is built as a list of parts so images can travel with text.
+    const msgs = [];
+    for (const m of recent) {
+      const mine = m.speaker === seat.id;
+      const role = mine ? 'assistant' : 'user';
+      const who = m.speaker === 'human' ? HUMAN.name : m.name;
+      const raw = cleanOutput(m.text, m.speaker === 'human' ? null : seatById(m.speaker));
+      const images = (!mine && Array.isArray(m.images)) ? m.images : [];
+      let text = mine ? raw : '[' + who + ']: ' + (raw || '');
+      if (images.length) text += (raw ? '\n' : '') + '(' + who + ' liitti ' + (images.length === 1 ? 'kuvan' : images.length + ' kuvaa') + ')';
+      const parts = [{ type: 'text', text }].concat(images.map(url => ({ type: 'image_url', image_url: { url } })));
+      const last = msgs[msgs.length - 1];
+      if (last && last.role === role) last.parts.push({ type: 'text', text: '\n\n' }, ...parts);
+      else msgs.push({ role, parts });
+    }
+    if (!msgs.length || msgs[0].role !== 'user') msgs.unshift({ role: 'user', parts: [{ type: 'text', text: '[Huone]: Palaveri alkaa.' }] });
+    if (extra) {
+      const last = msgs[msgs.length - 1];
+      if (last.role === 'user') last.parts.push({ type: 'text', text: '\n\n' + extra });
+      else msgs.push({ role: 'user', parts: [{ type: 'text', text: extra }] });
+    }
+    if (msgs[msgs.length - 1].role === 'assistant') msgs.push({ role: 'user', parts: [{ type: 'text', text: '[Huone]: Jatka keskustelua omalla vuorollasi.' }] });
+    const out = msgs.map(({ role, parts }) => {
+      if (parts.every(p => p.type === 'text')) return { role, content: parts.map(p => p.text).join('') };
+      // Merge adjacent text parts so the payload stays tidy.
+      const merged = [];
+      for (const p of parts) {
+        const prev = merged[merged.length - 1];
+        if (p.type === 'text' && prev && prev.type === 'text') prev.text += p.text;
+        else merged.push(p.type === 'text' ? { type: 'text', text: p.text } : p);
+      }
+      return { role, content: merged.filter(p => p.type !== 'text' || p.text.trim()) };
+    });
+    const sysMsg = /^anthropic\//.test(seat.model || '')
+      ? { role: 'system', content: [{ type: 'text', text: sys, cache_control: { type: 'ephemeral' } }] }
+      : { role: 'system', content: sys };
+    return [sysMsg, ...out];
+  }
+
+  function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  function cleanOutput(text, seat) {
+    let t = String(text || '');
+    if (!seat) return t;
+    // Remove a leading "[Name]:" or "Name:" the model may add.
+    t = t.replace(new RegExp('^\\s*\\[?\\s*' + escapeRe(seat.name) + '\\s*\\]?\\s*:\\s*', 'i'), '');
+    // Cut if the model starts writing someone else's turn.
+    const others = [HUMAN.name, 'Huone'].concat(state.settings.seats.filter(s => s.id !== seat.id).map(s => s.name));
+    const re = new RegExp('\\n\\s*\\[(' + others.map(escapeRe).join('|') + ')\\]\\s*:', 'i');
+    const m = t.match(re);
+    if (m) t = t.slice(0, m.index);
+    return t.trim() ? t.replace(/\s+$/, '') : t;
+  }
+
+  // ---------- API ----------
+  function friendlyError(status, raw) {
+    let detail = '';
+    try { const j = JSON.parse(raw); detail = (j.error && (j.error.message || j.error)) || ''; } catch (e) { detail = raw || ''; }
+    detail = String(detail).slice(0, 300);
+    if (status === 401) return 'API-avain ei kelpaa. Tarkista se asetuksista.';
+    if (status === 402) return 'Krediitit tai avaimen kuluraja on käytetty. Lisää krediittejä OpenRouterissa tai nosta avaimen rajaa.';
+    if (status === 429) return 'Liikaa pyyntöjä juuri nyt. Odota hetki ja yritä uudelleen.';
+    if (status === 404) return 'Mallia ei löytynyt. Tarkista mallin tunniste asetuksista. ' + detail;
+    return 'Virhe (' + status + '): ' + detail;
+  }
+
+  async function callModel(seat, messages, onDelta, onThinking, signal) {
+    const body = {
+      model: seat.model,
+      messages,
+      stream: true,
+      max_tokens: Math.max(100, state.settings.maxTokens | 0),
+      temperature: Number(state.settings.temperature),
+    };
+    if (seat.reasoning === 'low' || seat.reasoning === 'high') body.reasoning = { effort: seat.reasoning };
+    let res;
+    try {
+      res = await fetch(API + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + state.key, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal,
+      });
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      const err = new Error('Yhteyttä OpenRouteriin ei saatu. Tarkista verkkoyhteys. Jos avasit tiedoston suoraan levyltä, katso asetuksista ohje paikallisesta palvelimesta.');
+      err.fatal = true; throw err;
+    }
+    if (!res.ok) {
+      const raw = await res.text().catch(() => '');
+      const err = new Error(friendlyError(res.status, raw));
+      err.fatal = [401, 402].includes(res.status);
+      throw err;
+    }
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '', usage = null, model = null, finish = null;
+    const handle = rawLine => {
+      const line = rawLine.trim();
+      if (!line || line.startsWith(':') || !line.startsWith('data:')) return;
+      const data = line.slice(5).trim();
+      if (data === '[DONE]') return;
+      let j;
+      try { j = JSON.parse(data); } catch (e) { return; }
+      if (j.error) throw new Error('Virhe mallilta: ' + (j.error.message || JSON.stringify(j.error)));
+      if (j.model) model = j.model;
+      if (j.usage) usage = j.usage;
+      const ch = j.choices && j.choices[0];
+      if (ch) {
+        if (ch.finish_reason) finish = ch.finish_reason;
+        const d = ch.delta || ch.message || {};
+        if (d.content) onDelta(d.content);
+        else if (d.reasoning || d.reasoning_details) onThinking();
+      }
+    };
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, idx);
+        buf = buf.slice(idx + 1);
+        handle(line);
+      }
+    }
+    buf += dec.decode();
+    if (buf.trim()) buf.split('\n').forEach(handle);
+    return { usage, model, finish };
+  }
+
+  function costOf(modelId, usage) {
+    if (!usage) return null;
+    if (typeof usage.cost === 'number') return usage.cost;
+    const m = state.models[modelId];
+    if (!m) return null;
+    const p = parseFloat(m.pricing.prompt) || 0, c = parseFloat(m.pricing.completion) || 0;
+    return (usage.prompt_tokens || 0) * p + (usage.completion_tokens || 0) * c;
+  }
+
+  // ---------- Turns ----------
+  async function seatSpeak(seat, opts) {
+    const msg = { id: uid(), speaker: seat.id, name: seat.name, color: seat.color, model: seat.model, text: '', ts: Date.now(), pending: true };
+    state.transcript.push(msg);
+    if (state.transcript.length === 1) $('#log').innerHTML = '';
+    const el = renderMsg(msg);
+    el.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    setStatus(seat.name + ' on äänessä…');
+    const messages = buildMessages(seat, opts && opts.instruction);
+    let ok = true;
+    let lastPaint = 0;
+    try {
+      const r = await callModel(seat, messages,
+        delta => {
+          msg.text += delta; msg.thinking = false;
+          const now = performance.now();
+          if (now - lastPaint > 40) { lastPaint = now; renderMsg(msg); }
+        },
+        () => { if (!msg.thinking && !msg.text) { msg.thinking = true; renderMsg(msg); } },
+        state.abort.signal);
+      msg.text = cleanOutput(msg.text, seat);
+      if (r.model) msg.model = r.model;
+      msg.usage = r.usage || null;
+      const c = costOf(seat.model, r.usage);
+      if (typeof c === 'number') { msg.cost = c; state.totalCost += c; }
+      if (!msg.text.trim()) {
+        msg.error = r.finish === 'length'
+          ? 'Vastaus jäi tyhjäksi: malli käytti koko pituuden ajatteluun. Nosta enimmäispituutta tai laita mallin ajattelu "vähän"-tasolle asetuksista.'
+          : 'Malli palautti tyhjän vastauksen.';
+      } else if (r.finish === 'length') {
+        msg.note = 'katkesi enimmäispituuteen';
+      }
+      if (opts && opts.note && msg.text.trim()) msg.note = msg.note ? opts.note + ' · ' + msg.note : opts.note;
+    } catch (e) {
+      if (e.name === 'AbortError') {
+        msg.text = cleanOutput(msg.text, seat);
+        msg.note = 'keskeytetty';
+        if (!msg.text.trim()) { state.transcript = state.transcript.filter(m => m !== msg); document.getElementById('m-' + msg.id)?.remove(); saveTranscript(); return false; }
+      } else {
+        msg.error = e.message || String(e);
+        ok = !e.fatal;
+      }
+    }
+    msg.pending = false; msg.thinking = false;
+    saveTranscript();
+    renderMsg(msg);
+    renderCost();
+    if (opts && opts.onDone && !msg.error && msg.text.trim()) await opts.onDone(msg);
+    return ok;
+  }
+
+  function orderFor(seats) {
+    if (state.settings.order !== 'rotate' || seats.length < 2) return seats;
+    const k = state.rotate % seats.length;
+    state.rotate++;
+    return seats.slice(k).concat(seats.slice(0, k));
+  }
+
+  async function round(seats) {
+    for (const s of orderFor(seats)) {
+      if (state.abort.signal.aborted) return false;
+      const ok = await seatSpeak(s);
+      if (!ok) return false;
+    }
+    return true;
+  }
+
+  function addHuman(text, images) {
+    const msg = { id: uid(), speaker: 'human', name: HUMAN.name, text, ts: Date.now() };
+    if (images && images.length) msg.images = images.slice();
+    if (!state.transcript.length) $('#log').innerHTML = '';
+    state.transcript.push(msg);
+    saveTranscript();
+    renderMsg(msg);
+  }
+
+  function setRunning(on) {
+    state.running = on;
+    ['#btnAll', '#btnAsk', '#btnRounds', '#btnClear', '#btnNotes'].forEach(s => { $(s).disabled = on; });
+    $('#btnStop').hidden = !on;
+    if (!on) setStatus('');
+  }
+
+  async function run(kind) {
+    if (state.running) return;
+    if (!state.key) { openSettings(); toast('Lisää ensin OpenRouter-avain.'); return; }
+    if (syncing) return;
+    syncing = true;
+    try { await syncBeforeRun(); } finally { syncing = false; }
+    if (state.running) return;
+    const input = $('#input');
+    const text = input.value.trim();
+    let seats = enabledSeats();
+    let target = null;
+    if (kind === 'one') {
+      target = seatById($('#askWho').value);
+      if (!target || !target.model) { toast('Valitulla osallistujalla ei ole mallia.'); return; }
+    } else if (!seats.length) { toast('Ota ainakin yksi osallistuja mukaan.'); return; }
+    const images = state.pendingImages.slice();
+    if (!text && !images.length && !state.transcript.length) { toast('Kirjoita ensin aloitus.'); input.focus(); return; }
+    if (text || images.length) {
+      addHuman(text, images);
+      input.value = ''; fitInput();
+      state.pendingImages = []; renderTray();
+    }
+    setRunning(true);
+    state.abort = new AbortController();
+    try {
+      if (kind === 'all') await round(seats);
+      else if (kind === 'one') await seatSpeak(target);
+      else if (kind === 'rounds') {
+        const n = Math.min(20, Math.max(1, parseInt($('#rounds').value, 10) || 1));
+        for (let i = 0; i < n; i++) {
+          if (state.abort.signal.aborted) break;
+          setStatus('Kierros ' + (i + 1) + '/' + n);
+          const ok = await round(seats);
+          if (!ok) break;
+        }
+      }
+    } finally {
+      setRunning(false);
+      input.focus();
+    }
+  }
+
+  // ---------- Settings ----------
+  function seatFieldHTML(s, i) {
+    return '<fieldset data-seat="' + i + '">' +
+      '<legend><span class="seat-head" style="--c:' + esc(s.color) + '"><span class="dot"></span>' + esc(s.name) + '</span></legend>' +
+      '<div class="f-row">' +
+        '<div><label class="f">Nimi</label><input type="text" class="full" data-k="name" value="' + esc(s.name) + '"></div>' +
+        '<div><label class="f">Mukana</label><select class="full" data-k="enabled"><option value="1"' + (s.enabled ? ' selected' : '') + '>Kyllä</option><option value="0"' + (!s.enabled ? ' selected' : '') + '>Ei</option></select></div>' +
+      '</div>' +
+      '<div class="f-row">' +
+        '<div><label class="f">Malli (OpenRouter-tunniste)</label><input type="text" class="full" data-k="model" list="modelList" spellcheck="false" value="' + esc(s.model) + '"><div class="price" data-price></div></div>' +
+        '<div><label class="f">Ajattelu</label><select class="full" data-k="reasoning">' +
+          '<option value="default"' + (s.reasoning === 'default' ? ' selected' : '') + '>Mallin oletus</option>' +
+          '<option value="low"' + (s.reasoning === 'low' ? ' selected' : '') + '>Vähän (nopeampi, halvempi)</option>' +
+          '<option value="high"' + (s.reasoning === 'high' ? ' selected' : '') + '>Paljon (syvällisempi)</option>' +
+        '</select></div>' +
+      '</div>' +
+      '<label class="f">Oma lisäohje tälle osallistujalle (valinnainen)</label>' +
+      '<textarea class="full" rows="2" data-k="persona">' + esc(s.persona || '') + '</textarea>' +
+    '</fieldset>';
+  }
+
+  function fillSeatPrices() {
+    document.querySelectorAll('#seatFields fieldset').forEach(fs => {
+      const input = fs.querySelector('[data-k="model"]');
+      fs.querySelector('[data-price]').textContent = priceText(input.value.trim());
+    });
+  }
+
+  function openSettings() {
+    const st = state.settings;
+    $('#apiKey').value = state.key;
+    $('#rememberKey').checked = !!store.get(K.key, '');
+    $('#roomPrompt').value = st.roomPrompt;
+    $('#maxTokens').value = st.maxTokens;
+    $('#memory').value = st.memory;
+    $('#temperature').value = st.temperature;
+    $('#order').value = st.order;
+    $('#blind').value = st.blind;
+    $('#seatFields').innerHTML = st.seats.map(seatFieldHTML).join('');
+    document.querySelectorAll('#seatFields [data-k="model"]').forEach(inp => inp.addEventListener('input', fillSeatPrices));
+    fillSeatPrices();
+    $('#keyState').textContent = ''; $('#keyState').className = 'keystate';
+    $('#ghRepo').value = (state.gh && state.gh.repo) || '';
+    $('#ghToken').value = (state.gh && state.gh.token) || '';
+    $('#ghState').textContent = !state.gh ? '' : state.ghOk ? 'Yhdistetty: ' + state.gh.repo + '.' : (state.ghError || 'Ei yhdistetty.');
+    $('#ghState').className = 'keystate' + (!state.gh ? '' : state.ghOk ? ' ok' : ' bad');
+    if (!$('#dlg').open) $('#dlg').showModal();
+  }
+
+  function applySettings() {
+    const st = state.settings;
+    const before = JSON.stringify(st);
+    const key = $('#apiKey').value.trim();
+    state.key = key;
+    if ($('#rememberKey').checked && key) store.set(K.key, key); else store.del(K.key);
+    st.roomPrompt = $('#roomPrompt').value.trim() || DEFAULT_ROOM;
+    st.maxTokens = Math.min(8000, Math.max(100, parseInt($('#maxTokens').value, 10) || DEFAULTS.maxTokens));
+    st.memory = Math.min(200, Math.max(4, parseInt($('#memory').value, 10) || DEFAULTS.memory));
+    const t = parseFloat($('#temperature').value);
+    st.temperature = isFinite(t) ? Math.min(1.5, Math.max(0, t)) : DEFAULTS.temperature;
+    st.order = $('#order').value;
+    st.blind = $('#blind').value;
+    document.querySelectorAll('#seatFields fieldset').forEach(fs => {
+      const s = st.seats[Number(fs.dataset.seat)];
+      const get = k => fs.querySelector('[data-k="' + k + '"]').value;
+      s.name = get('name').trim() || s.name;
+      s.enabled = get('enabled') === '1';
+      const model = get('model').trim();
+      if (model !== s.model) s.autoModel = false;
+      s.model = model;
+      s.reasoning = get('reasoning');
+      s.persona = get('persona').trim();
+    });
+    saveSettings();
+    // Only a real change travels to the other devices, so a new phone never overwrites the shared settings with defaults.
+    if (JSON.stringify(st) !== before) {
+      state.settingsUpdated = Date.now(); store.set(K.settingsUpdated, state.settingsUpdated);
+      pushSettings();
+    }
+    applyGitHubFields();
+    renderChips(); renderAskWho(); renderAll();
+  }
+
+  async function checkKey() {
+    const key = $('#apiKey').value.trim();
+    const out = $('#keyState');
+    if (!key) { out.textContent = 'Avain puuttuu.'; out.className = 'keystate bad'; return; }
+    out.textContent = 'Tarkistetaan…'; out.className = 'keystate';
+    for (const path of ['/key', '/auth/key']) {
+      try {
+        const res = await fetch(API + path, { headers: { 'Authorization': 'Bearer ' + key } });
+        if (res.status === 404) continue;
+        if (!res.ok) { out.textContent = res.status === 401 ? 'Avain ei kelpaa.' : 'Tarkistus epäonnistui (' + res.status + ').'; out.className = 'keystate bad'; return; }
+        const j = await res.json();
+        const d = j.data || {};
+        const bits = ['Avain toimii.'];
+        if (typeof d.usage === 'number') bits.push('Käytetty: $' + d.usage.toFixed(2) + '.');
+        if (d.limit != null && typeof d.limit === 'number') bits.push('Avaimen raja: $' + d.limit.toFixed(2) + '.');
+        if (typeof d.limit_remaining === 'number') bits.push('Jäljellä: $' + d.limit_remaining.toFixed(2) + '.');
+        out.textContent = bits.join(' '); out.className = 'keystate ok';
+        return;
+      } catch (e) {
+        out.textContent = 'Yhteyttä ei saatu. Katso alempaa ohje paikallisesta palvelimesta.'; out.className = 'keystate bad'; return;
+      }
+    }
+    out.textContent = 'Avainta ei voitu tarkistaa, mutta se voi silti toimia.'; out.className = 'keystate';
+  }
+
+  // ---------- Export / clear ----------
+  function stamp(d) {
+    const pad = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes());
+  }
+
+  function transcriptMd(d) {
+    const lines = ['# Moonglow – ' + d.toLocaleString('fi-FI'), ''];
+    state.transcript.forEach(m => {
+      if (m.error) return;
+      const who = m.speaker === 'human' ? HUMAN.name : m.name + (m.model ? ' (' + m.model + ')' : '');
+      const imgNote = (Array.isArray(m.images) && m.images.length) ? ['', '*(liitteenä ' + (m.images.length === 1 ? 'kuva' : m.images.length + ' kuvaa') + ')*'] : [];
+      lines.push('**' + who + '** · ' + new Date(m.ts).toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' }) + (m.note ? ' · ' + m.note : ''), '', (m.text || '').trim(), ...imgNote, '', '---', '');
+    });
+    lines.push('Kulut yhteensä: ' + fmtCost(state.totalCost));
+    return lines.join('\n');
+  }
+
+  function exportMd() {
+    if (!state.transcript.length) { toast('Huone on vielä tyhjä.'); return; }
+    const d = new Date();
+    const blob = new Blob([transcriptMd(d)], { type: 'text/markdown;charset=utf-8' });
+    const a = document.createElement('a');
+    a.download = 'moonglow-' + stamp(d) + '.md';
+    a.href = URL.createObjectURL(blob);
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  const CLEAR_LABEL = 'Tyhjennä huone';
+  let clearArmed = false, clearTimer = null;
+  async function clearRoom() {
+    const b = $('#btnClear');
+    if (!clearArmed) {
+      clearArmed = true; b.textContent = 'Varmasti? Klikkaa uudelleen';
+      clearTimeout(clearTimer); clearTimer = setTimeout(() => { clearArmed = false; b.textContent = CLEAR_LABEL; }, 3500);
+      return;
+    }
+    clearArmed = false; clearTimeout(clearTimer);
+    let logged = false;
+    if (memReady() && state.transcript.length) {
+      b.disabled = true; b.textContent = 'Tallennetaan iltaa…';
+      if (memKind() === 'github') await pullRoom(true);
+      clearTimeout(autosaveTimer); autosaveTimer = null;
+      logged = await autosave();
+      b.disabled = false;
+      if (!logged) { b.textContent = CLEAR_LABEL; toast('Iltaa ei saatu tallennettua, joten huonetta ei tyhjennetty. Yritä hetken päästä uudelleen.'); return; }
+    }
+    state.transcript = []; state.totalCost = 0; state.revealed.clear();
+    state.session = null; store.del(K.session);
+    saveTranscript(); renderAll(); renderCost();
+    b.textContent = 'Huone tyhjennetty ✓';
+    clearTimer = setTimeout(() => { b.textContent = CLEAR_LABEL; }, 2500);
+    toast(logged ? 'Huone tyhjennetty. Ilta on tallessa: ' + LOGS_DIR + '/' + state.savedName + '.' : 'Huone tyhjennetty. Vinkki: vie keskustelu talteen ennen tyhjentämistä.');
+  }
+
+  // ---------- Images ----------
+  const MAX_IMAGES = 4;
+  const MAX_SIDE = 1536;
+
+  function renderTray() {
+    const tray = $('#tray');
+    tray.innerHTML = '';
+    state.pendingImages.forEach((src, i) => {
+      const d = document.createElement('div');
+      d.className = 'thumb';
+      d.innerHTML = '<img alt="Liitettävä kuva ' + (i + 1) + '"><button type="button" title="Poista kuva" aria-label="Poista kuva">×</button>';
+      d.querySelector('img').src = src;
+      d.querySelector('button').addEventListener('click', () => { state.pendingImages.splice(i, 1); renderTray(); });
+      tray.appendChild(d);
+    });
+  }
+
+  function readAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+  }
+
+  function loadImage(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Kuvaa ei voitu avata.'));
+      img.src = src;
+    });
+  }
+
+  // Shrink to at most MAX_SIDE px and re-encode as JPEG, so the image is cheap to send and fits in storage.
+  async function compressImage(file) {
+    const src = await readAsDataURL(file);
+    const img = await loadImage(src);
+    const scale = Math.min(1, MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
+    return c.toDataURL('image/jpeg', 0.86);
+  }
+
+  async function addImageFiles(files) {
+    const list = Array.from(files || []).filter(f => f && /^image\//.test(f.type));
+    if (!list.length) return;
+    for (const f of list) {
+      if (state.pendingImages.length >= MAX_IMAGES) { toast('Enintään ' + MAX_IMAGES + ' kuvaa kerrallaan.'); break; }
+      try { state.pendingImages.push(await compressImage(f)); }
+      catch (e) { toast(e.message || 'Kuvan lisääminen ei onnistunut.'); }
+    }
+    renderTray();
+    $('#input').focus();
+  }
+
+  // ---------- Folder: memory pages and autosave ----------
+  // Moonglow reads each participant's memory page from <folder>/Muistisivut and saves every
+  // conversation to <folder>/Keskustelut. Works in browsers with the File System Access API (Chrome, Edge).
+  const PAGES_DIR = 'Muistisivut';
+  const LOGS_DIR = 'Keskustelut';
+  const FS_OK = typeof window.showDirectoryPicker === 'function';
+  const NOTE_PROMPT = '[Huone]: Ilta päättyy. Kirjoita lyhyt muistiinpano omalle muistisivullesi: mitä haluat muistaa tästä illasta? ' +
+    'Enintään viisi riviä, omin sanoin. Älä kirjoita Johanneksen henkilökohtaisia asioita, ellei hän ole antanut siihen lupaa. ' +
+    'Kirjoita vain itse muistiinpano.';
+
+  const idb = {
+    open() {
+      return new Promise((resolve, reject) => {
+        const r = indexedDB.open('moonglow', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('handles');
+        r.onsuccess = () => resolve(r.result);
+        r.onerror = () => reject(r.error);
+      });
+    },
+    async get(k) {
+      const db = await idb.open();
+      return new Promise((resolve, reject) => {
+        const q = db.transaction('handles', 'readonly').objectStore('handles').get(k);
+        q.onsuccess = () => resolve(q.result);
+        q.onerror = () => reject(q.error);
+      });
+    },
+    async set(k, v) {
+      const db = await idb.open();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('handles', 'readwrite');
+        tx.objectStore('handles').put(v, k);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    },
+  };
+
+  function pageFileName(seat) { return String(seat.name || seat.id).replace(/[\\/:*?"<>|]/g, '').trim() + '.md'; }
+
+  async function readFile(dirName, fileName) {
+    try {
+      const d = await state.dir.getDirectoryHandle(dirName);
+      const fh = await d.getFileHandle(fileName);
+      return await (await fh.getFile()).text();
+    } catch (e) { return ''; }
+  }
+
+  async function writeFile(dirName, fileName, text) {
+    const d = await state.dir.getDirectoryHandle(dirName, { create: true });
+    const fh = await d.getFileHandle(fileName, { create: true });
+    const w = await fh.createWritable();
+    await w.write(text);
+    await w.close();
+  }
+
+  async function loadPages() {
+    if (!memReady()) return;
+    // All pages at once: on GitHub each one is a separate request.
+    const seatList = state.settings.seats.slice();
+    const texts = await Promise.all([memRead(PAGES_DIR, 'Huone.md')].concat(seatList.map(s => memRead(PAGES_DIR, pageFileName(s)))));
+    state.pages.room = texts[0].trim();
+    const seats = {};
+    seatList.forEach((s, i) => { seats[s.id] = texts[i + 1].trim(); });
+    state.pages.seats = seats;
+    renderMemory();
+  }
+
+  function pageNames() {
+    const names = state.settings.seats.filter(s => state.pages.seats[s.id]).map(s => s.name);
+    if (state.pages.room) names.unshift('Huone');
+    return names.length ? names.join(', ') : 'ei vielä yhtään';
+  }
+
+  function renderMemory() {
+    const b = $('#btnFolder');
+    if (!b) return;
+    b.disabled = false;
+    if (ghCfg()) {
+      if (state.ghConnecting) {
+        b.textContent = 'Muisti…';
+        b.title = 'Yhdistetään GitHub-muistiin ' + ghCfg().repo + '…';
+        return;
+      }
+      if (!state.ghOk) {
+        b.textContent = 'Muisti ⚠';
+        b.title = 'GitHub-muistiin ei saatu yhteyttä' + (state.ghError ? ': ' + state.ghError : '') + '.\nKlikkaa yrittääksesi uudelleen, tai tarkista repo ja tunnus asetuksista.';
+        return;
+      }
+      b.textContent = 'Muisti ✓';
+      b.title = 'Muisti: GitHub ' + ghCfg().repo + '\nMuistisivut: ' + pageNames() +
+        '\nHuone kulkee laitteiden välillä' +
+        (state.roomSyncedAt ? ' (tallennettu viimeksi klo ' + new Date(state.roomSyncedAt).toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' }) + ')' : '') +
+        '.\nKlikkaa hakeaksesi uusimmat muistisivut ja keskustelun.';
+      return;
+    }
+    if (!LOCAL) {
+      b.textContent = 'Yhdistä muisti';
+      b.title = 'Yhdistä GitHub-muisti asetuksista, niin muistisivut ja keskustelut kulkevat puhelimen ja Macin välillä.';
+      return;
+    }
+    if (!FS_OK) {
+      b.textContent = 'Kansio'; b.disabled = true;
+      b.title = 'Kansioyhteys toimii Chromessa ja Edgessä. Tässä selaimessa muistisivut ja automaattinen tallennus eivät ole käytössä.';
+      return;
+    }
+    if (!state.dir) {
+      b.textContent = 'Yhdistä kansio';
+      b.title = 'Valitse Palaverihuone-kansio: Moonglow lukee sieltä muistisivut ja tallentaa keskustelut automaattisesti.';
+      return;
+    }
+    if (!state.dirOk) {
+      b.textContent = 'Palauta kansio';
+      b.title = 'Selain tarvitsee luvan kansioon ' + state.dir.name + '. Klikkaa antaaksesi sen.';
+      return;
+    }
+    b.textContent = 'Kansio ✓';
+    b.title = 'Kansio: ' + state.dir.name + '\nMuistisivut: ' + pageNames() +
+      '\nKeskustelut tallentuvat kansioon ' + LOGS_DIR +
+      (state.savedAt ? ' (viimeksi klo ' + new Date(state.savedAt).toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' }) + ')' : '') +
+      '.\nKlikkaa lukeaksesi muistisivut uudelleen. Alt-klikkaus vaihtaa kansion.';
+  }
+
+  async function connectFolder(change) {
+    if (!FS_OK) { toast('Kansioyhteys toimii Chromessa ja Edgessä.'); return; }
+    try {
+      if (state.dir && !change) {
+        if (!state.dirOk) state.dirOk = (await state.dir.requestPermission({ mode: 'readwrite' })) === 'granted';
+        if (state.dirOk) { await afterConnect(); return; }
+      }
+      const h = await window.showDirectoryPicker({ id: 'moonglow', mode: 'readwrite' });
+      state.dir = h; state.dirOk = true;
+      try { await idb.set('dir', h); } catch (e) {}
+      await afterConnect();
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+      toast('Kansioon ei saatu yhteyttä: ' + (e.message || e));
+    }
+  }
+
+  async function afterConnect() {
+    await loadPages();
+    pushSettings();  // the folder keeps a copy of the settings (without the key) in Asetukset.json
+    toast('Kansio ' + state.dir.name + ' yhdistetty. Muistisivut: ' + pageNames() + '.');
+    if (!state.transcript.length) renderAll();
+    scheduleAutosave(0);
+  }
+
+  async function restoreFolder() {
+    if (FS_OK) {
+      try {
+        const h = await idb.get('dir');
+        if (h) {
+          state.dir = h;
+          state.dirOk = (await h.queryPermission({ mode: 'readwrite' })) === 'granted';
+          if (state.dirOk) await loadPages();
+        }
+      } catch (e) {}
+    }
+    renderMemory();
+    if (!state.transcript.length) renderAll();
+  }
+
+  let autosaveTimer = null;
+  function scheduleAutosave(delay) {
+    if (!memReady() || !state.transcript.length) return;
+    clearTimeout(autosaveTimer);
+    // GitHub keeps the readable log less often; the live room travels in huone.json within seconds.
+    autosaveTimer = setTimeout(autosave, delay == null ? (memKind() === 'github' ? 30000 : 1500) : delay);
+  }
+
+  async function autosave() {
+    autosaveTimer = null;
+    if (!memReady() || !state.transcript.length) return false;
+    if (!state.session) { state.session = { started: (state.transcript[0] && state.transcript[0].ts) || Date.now() }; store.set(K.session, state.session); }
+    const started = new Date(state.session.started);
+    const kind = memKind(), at = state.roomUpdated;
+    try {
+      // Seconds keep two evenings started in the same minute in separate files.
+      const name = 'moonglow-' + stamp(started) + String(started.getSeconds()).padStart(2, '0') + '.md';
+      await memWrite(LOGS_DIR, name, transcriptMd(started), 'Keskustelu ' + started.toLocaleDateString('fi-FI'));
+      // The folder also keeps the live room as JSON, images included: a backup and the way to move the room to GitHub.
+      if (kind === 'folder') await writeFile(LOGS_DIR, 'huone.json', JSON.stringify(roomDoc(true)));
+      if (state.roomUpdated === at) store.del(K.logDirty);
+      state.savedAt = Date.now(); state.savedName = name;
+      renderMemory();
+      return true;
+    } catch (e) {
+      if (kind === 'folder') {
+        state.dirOk = false; renderMemory();
+        setStatus('Keskustelua ei voitu tallentaa kansioon (' + (e.message || e) + '). Palauta kansioyhteys yläpalkista.');
+      } else setStatus('Keskustelun lokia ei voitu tallentaa GitHubiin (' + (e.message || e) + ').');
+      return false;
+    }
+  }
+
+  // Add a dated note under "## Huoneen muistot", creating the section if needed.
+  async function appendNote(seat, text) {
+    const file = pageFileName(seat);
+    const entry = '### ' + new Date().toLocaleDateString('fi-FI') + '\n' + String(text).trim() + '\n';
+    await memUpdate(PAGES_DIR, file, page => addNote(page, entry), seat.name + ': illan muistiinpano');
+  }
+
+  function addNote(page, entry) {
+    const m = page.match(/^##\s+Huoneen muistot\s*$/m);
+    if (!m) {
+      page = page.replace(/\s*$/, '') + (page.trim() ? '\n\n' : '') + '## Huoneen muistot\n\n' + entry;
+    } else {
+      const start = m.index + m[0].length;
+      const next = page.slice(start).search(/^##\s+/m);
+      const end = next < 0 ? page.length : start + next;
+      page = page.slice(0, end).replace(/\s*$/, '') + '\n\n' + entry + (next < 0 ? '' : '\n' + page.slice(end));
+    }
+    return page;
+  }
+
+  async function eveningNotes() {
+    if (state.running) return;
+    if (!state.key) { openSettings(); toast('Lisää ensin OpenRouter-avain.'); return; }
+    if (!memReady()) { toast(LOCAL && !ghCfg() ? 'Yhdistä ensin kansio, jotta muistiinpanot voidaan tallentaa muistisivuille.' : 'Yhdistä ensin muisti, jotta muistiinpanot voidaan tallentaa muistisivuille.'); return; }
+    if (!state.transcript.length) { toast('Huone on vielä tyhjä.'); return; }
+    const seats = enabledSeats();
+    if (!seats.length) { toast('Ota ainakin yksi osallistuja mukaan.'); return; }
+    await loadPages();
+    setRunning(true);
+    state.abort = new AbortController();
+    const saved = [];
+    try {
+      for (const s of seats) {
+        if (state.abort.signal.aborted) break;
+        setStatus(s.name + ' kirjoittaa muistiinpanoa…');
+        const ok = await seatSpeak(s, {
+          instruction: NOTE_PROMPT,
+          note: 'muistiinpano omalle sivulle',
+          onDone: async msg => {
+            try { await appendNote(s, msg.text); saved.push(s.name); }
+            catch (e) { msg.note = 'muistiinpanoa ei voitu tallentaa'; renderMsg(msg); }
+          },
+        });
+        if (!ok) break;
+      }
+    } finally {
+      setRunning(false);
+      await loadPages();
+      if (saved.length) toast('Muistiinpanot tallennettu: ' + saved.join(', ') + '.');
+    }
+  }
+
+  // ---------- GitHub: shared memory for the web version ----------
+  // The web version keeps memory pages, the live room, readable logs and shared settings in a private GitHub repo,
+  // so the same room works on the phone and on the Mac. The token stays in this browser and goes only to api.github.com.
+  const LOCAL = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const GH_API = 'https://api.github.com';
+  const ROOM_FILE = LOGS_DIR + '/huone.json';
+  const SETTINGS_FILE = 'Asetukset.json';
+  const IMG_DIR = 'Kuvat';
+  const ghShas = {};  // path -> sha of the version we last saw; null = the file does not exist
+
+  function ghCfg() { return state.gh && state.gh.repo && state.gh.token ? state.gh : null; }
+  function memKind() { return ghCfg() ? (state.ghOk ? 'github' : null) : (state.dir && state.dirOk ? 'folder' : null); }
+  function memReady() { return !!memKind(); }
+  function cleanRepo(v) { return String(v || '').trim().replace(/^https?:\/\/github\.com\//i, '').replace(/\.git$/i, '').replace(/\/+$/, ''); }
+
+  function ghUrl(path) { return GH_API + '/repos/' + ghCfg().repo + '/contents/' + path.split('/').map(encodeURIComponent).join('/'); }
+  // Only headers GitHub allows from browsers (its CORS list): no X-GitHub-Api-Version, the default version is used.
+  function ghHeaders(extra, cfg) {
+    return Object.assign({ Authorization: 'Bearer ' + (cfg || ghCfg()).token }, extra || {});
+  }
+  function b64enc(text) {
+    const bytes = new TextEncoder().encode(text);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+  function b64dec(b64) {
+    const bin = atob(String(b64).replace(/\s/g, ''));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+  async function ghError(r) {
+    let detail = '';
+    try { detail = (await r.json()).message || ''; } catch (e) {}
+    const msg = r.status === 401 ? 'tunnus ei kelpaa tai on vanhentunut (401)'
+      : r.status === 403 ? 'tunnuksella ei ole oikeutta tähän, tai GitHubin pyyntöraja on täynnä (403)'
+      : r.status === 404 ? 'repoa ei löydy, tai tunnuksella ei ole siihen oikeutta (404)'
+      : 'GitHub vastasi ' + r.status;
+    return new Error(msg + (detail && r.status !== 404 ? ': ' + detail : ''));
+  }
+  // -> { text, sha, etag }; { notModified: true } when the file still matches etag; null when it does not exist.
+  async function ghGet(path, etag) {
+    const h = ghHeaders({ Accept: 'application/vnd.github.object+json' });
+    if (etag) h['If-None-Match'] = etag;
+    const r = await fetch(ghUrl(path), { headers: h, cache: 'no-store' });
+    if (r.status === 304) return { notModified: true };
+    if (r.status === 404) { ghShas[path] = null; return null; }
+    if (!r.ok) throw await ghError(r);
+    const j = await r.json();
+    ghShas[path] = j.sha;
+    const out = { sha: j.sha, etag: r.headers.get('ETag') };
+    if (j.encoding === 'base64' && typeof j.content === 'string' && (j.content || !j.size)) { out.text = b64dec(j.content); return out; }
+    out.text = await (await ghRaw(path)).text();  // files over 1 MB come without content
+    return out;
+  }
+  async function ghRaw(path) {
+    const r = await fetch(ghUrl(path), { headers: ghHeaders({ Accept: 'application/vnd.github.raw+json' }), cache: 'no-store' });
+    if (!r.ok) throw await ghError(r);
+    return r;
+  }
+  // true when saved, false when another device saved first (the caller reads again).
+  // keepalive lets a small save finish while the page is closing (browsers allow it up to 64 kB).
+  async function ghPut(path, b64, message, sha, keepalive) {
+    const body = { message: message || ('Moonglow: ' + path), content: b64 };
+    if (sha) body.sha = sha;
+    const json = JSON.stringify(body);
+    const r = await fetch(ghUrl(path), { method: 'PUT', headers: ghHeaders({ Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }), body: json, keepalive: !!keepalive && json.length < 60000 });
+    if (r.ok) { const j = await r.json(); ghShas[path] = j.content && j.content.sha; return true; }
+    if (r.status === 409 || r.status === 422) { delete ghShas[path]; return false; }
+    throw await ghError(r);
+  }
+  // Logs and settings: whoever saves last wins.
+  async function ghWrite(path, text, message) {
+    for (let i = 0; i < 3; i++) {
+      if (ghShas[path] === undefined) await ghGet(path);
+      if (await ghPut(path, b64enc(text), message, ghShas[path] || undefined)) return;
+    }
+    throw new Error('GitHub hylkäsi tallennuksen kolme kertaa.');
+  }
+  async function ghTest(cfg) {
+    const head = { headers: ghHeaders({ Accept: 'application/vnd.github+json' }, cfg), cache: 'no-store' };
+    const r = await fetch(GH_API + '/repos/' + cfg.repo, head);
+    if (!r.ok) throw await ghError(r);
+    const j = await r.json();
+    const c = await fetch(GH_API + '/repos/' + cfg.repo + '/contents/', head);
+    if (!c.ok && c.status !== 404) throw await ghError(c);  // an empty repo answers 404 here
+    return { private: !!j.private };
+  }
+
+  async function memRead(dirName, fileName) {
+    if (memKind() === 'github') { const f = await ghGet(dirName + '/' + fileName); return f ? f.text : ''; }
+    return readFile(dirName, fileName);
+  }
+  async function memWrite(dirName, fileName, text, message) {
+    if (memKind() === 'github') return ghWrite(dirName + '/' + fileName, text, message);
+    return writeFile(dirName, fileName, text);
+  }
+  // Read, change and save one file. On GitHub a save from another device in between is read again, never overwritten.
+  async function memUpdate(dirName, fileName, change, message) {
+    if (memKind() !== 'github') return writeFile(dirName, fileName, change(await readFile(dirName, fileName)));
+    const path = dirName + '/' + fileName;
+    for (let i = 0; i < 3; i++) {
+      const f = await ghGet(path);
+      if (await ghPut(path, b64enc(change(f ? f.text : '')), message, f ? f.sha : undefined)) return;
+    }
+    throw new Error('Sivua muutettiin samaan aikaan toisaalla. Yritä uudelleen.');
+  }
+
+  async function connectGitHub(manual) {
+    if (!ghCfg() || state.ghConnecting) return;
+    state.ghConnecting = true; state.ghError = '';
+    renderMemory();
+    let t = null;
+    try {
+      t = await ghTest(ghCfg());
+      state.ghOk = true;
+      await pullSettings();
+      await loadPages();
+      // A browser that has just joined keeps taking the shared room's side until it has seen it once.
+      if (await pullRoom(true) && state.gh && state.gh.joining) { delete state.gh.joining; store.set(K.github, state.gh); }
+      sharedAt = Date.now();
+      if (store.get(K.logDirty, false)) scheduleAutosave();  // the last visit ended before its log was written
+    } catch (e) {
+      state.ghOk = false; state.ghError = e.message || String(e);
+    }
+    state.ghConnecting = false;
+    renderMemory();
+    if (!state.transcript.length) renderAll();
+    if (state.ghOk) {
+      if (manual) toast('Muisti yhdistetty: ' + ghCfg().repo + '. Muistisivut: ' + pageNames() + '.');
+      if (t && !t.private) setStatus('Huom: muistirepo ' + ghCfg().repo + ' on julkinen. Muuta se yksityiseksi GitHubissa.');
+    } else if (manual) toast('GitHub-yhteys ei onnistunut: ' + state.ghError);
+  }
+
+  function resetGitHub() {
+    Object.keys(ghShas).forEach(k => delete ghShas[k]);
+    state.ghOk = false; roomEtag = null; roomKnown = 0;
+  }
+  function applyGitHubFields() {
+    const repo = cleanRepo($('#ghRepo').value), token = $('#ghToken').value.trim();
+    if (!repo && !token) { if (state.gh) forgetGitHub(); return; }
+    if (!repo || !token) { toast('GitHub-muistiin tarvitaan sekä repo että tunnus.'); return; }
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) { toast('Repon nimi on muotoa käyttäjänimi/moonglow-muisti.'); return; }
+    const old = state.gh;
+    if (!old || old.repo !== repo || old.token !== token) {
+      state.gh = { repo, token };
+      // A room this browser has not been part of yet: its shared room and settings win over what is here.
+      if (!old || old.repo !== repo || old.joining) state.gh.joining = true;
+      store.set(K.github, state.gh);
+      resetGitHub();
+    }
+    if (!state.ghOk) connectGitHub(true);
+  }
+  function forgetGitHub() {
+    state.gh = null; state.ghError = '';
+    store.del(K.github);
+    resetGitHub();
+    state.pages = { room: '', seats: {} };
+    renderMemory();
+    toast('GitHub-yhteys unohdettu tästä selaimesta. Huone ja asetukset jäävät tähän selaimeen.');
+  }
+  async function testGitHubFields() {
+    const out = $('#ghState');
+    const cfg = { repo: cleanRepo($('#ghRepo').value), token: $('#ghToken').value.trim() };
+    if (!cfg.repo || !cfg.token) { out.textContent = 'Anna repo ja tunnus.'; out.className = 'keystate bad'; return; }
+    out.textContent = 'Testataan…'; out.className = 'keystate';
+    try {
+      const t = await ghTest(cfg);
+      out.textContent = t.private ? 'Yhteys toimii. ' + cfg.repo + ' on yksityinen repo.' : 'Yhteys toimii, mutta ' + cfg.repo + ' on JULKINEN. Muuta se yksityiseksi ennen käyttöä.';
+      out.className = 'keystate ' + (t.private ? 'ok' : 'bad');
+    } catch (e) { out.textContent = 'Ei yhteyttä: ' + (e.message || e); out.className = 'keystate bad'; }
+  }
+
+  // ---------- Shared settings (never the OpenRouter key) ----------
+  function settingsDoc() { return { app: 'moonglow', v: 1, updated: state.settingsUpdated || Date.now(), settings: state.settings }; }
+  // Has this browser's room been set up by hand (names, personas, room prompt), or is it still at the defaults?
+  function settingsCustomized() {
+    const strip = st => JSON.stringify(Object.assign({}, st, { seats: (st.seats || []).map(s => { const c = Object.assign({}, s); delete c.model; delete c.autoModel; return c; }) }));
+    return strip(state.settings) !== strip(mergeSettings(null));
+  }
+  async function pushSettings() {
+    try {
+      if (memKind() === 'github') await ghWrite(SETTINGS_FILE, JSON.stringify(settingsDoc(), null, 1), 'Asetukset');
+      else if (memKind() === 'folder') {
+        const fh = await state.dir.getFileHandle(SETTINGS_FILE, { create: true });
+        const w = await fh.createWritable(); await w.write(JSON.stringify(settingsDoc(), null, 1)); await w.close();
+      }
+    } catch (e) { setStatus('Asetuksia ei voitu tallentaa muistiin (' + (e.message || e) + ').'); }
+  }
+  async function pullSettings() {
+    if (memKind() !== 'github') return;
+    const f = await ghGet(SETTINGS_FILE);
+    if (!f) {
+      // The first browser in a new room shares its settings, unless they are only the defaults.
+      if (state.settingsUpdated || settingsCustomized()) {
+        if (!state.settingsUpdated) { state.settingsUpdated = Date.now(); store.set(K.settingsUpdated, state.settingsUpdated); }
+        await pushSettings();
+      }
+      return;
+    }
+    let doc = null;
+    try { doc = JSON.parse(f.text); } catch (e) { return; }
+    if (!doc || !doc.settings) return;
+    const remote = Number(doc.updated) || 0, local = state.settingsUpdated || 0;
+    if ((state.gh && state.gh.joining) || remote > local) {
+      state.settings = mergeSettings(doc.settings);
+      state.settingsUpdated = remote || Date.now();
+      saveSettings(); store.set(K.settingsUpdated, state.settingsUpdated);
+      renderChips(); renderAskWho();
+    } else if (remote < local) await pushSettings();
+  }
+
+  // ---------- The live room travels between devices as Keskustelut/huone.json ----------
+  // Images are saved once to Kuvat/ and referenced by path, so the room file stays small.
+  let roomTimer = null, roomBusy = false, pullAt = 0, roomEtag = null, sharedAt = 0, syncing = false;
+  let roomKnown = 0;  // the shared room's "updated" as this browser last saw it
+  function roomDoc(inlineImages) {
+    return {
+      app: 'moonglow', v: 1, updated: state.roomUpdated || Date.now(),
+      session: state.session, totalCost: state.totalCost,
+      transcript: state.transcript.filter(m => !m.pending).map(m => {
+        const c = Object.assign({}, m);
+        delete c.needImages;
+        if (!inlineImages) delete c.images;
+        return c;
+      }),
+    };
+  }
+  function persistRoomLocal() {
+    store.set(K.transcript, state.transcript);
+    store.set(K.cost, state.totalCost);
+    if (state.session) store.set(K.session, state.session); else store.del(K.session);
+    store.set(K.updated, state.roomUpdated);
+  }
+  function scheduleRoomPush(delay) {
+    if (memKind() !== 'github') return;
+    clearTimeout(roomTimer);
+    roomTimer = setTimeout(pushRoom, delay == null ? 2500 : delay);
+  }
+  async function uploadImages() {
+    let changed = false;
+    for (const m of state.transcript) {
+      if (m.pending || !Array.isArray(m.images) || !m.images.length) continue;
+      m.imageRefs = m.imageRefs || [];
+      for (let i = 0; i < m.images.length; i++) {
+        if (m.imageRefs[i]) continue;
+        const match = /^data:image\/(\w+);base64,(.*)$/.exec(m.images[i] || '');
+        if (!match) continue;
+        const path = IMG_DIR + '/' + m.id + '-' + (i + 1) + '.' + (match[1] === 'jpeg' ? 'jpg' : match[1]);
+        await ghPut(path, match[2], 'Kuva huoneeseen');  // false = it is there already
+        m.imageRefs[i] = path; changed = true;
+      }
+    }
+    if (changed) store.set(K.transcript, state.transcript);
+  }
+  async function pushRoom(closing) {
+    clearTimeout(roomTimer); roomTimer = null;
+    if (memKind() !== 'github') return;
+    if (roomBusy) { scheduleRoomPush(1500); return; }
+    roomBusy = true;
+    try {
+      await uploadImages();
+      if (!state.roomUpdated) { state.roomUpdated = Date.now(); store.set(K.updated, state.roomUpdated); }
+      for (let i = 0; i < 4; i++) {
+        if (ghShas[ROOM_FILE] === undefined) {
+          // Not seen yet, or another device saved in between: take its messages along first.
+          const remote = await ghGet(ROOM_FILE);
+          if (remote) { roomEtag = remote.etag; if (!mergeRoom(JSON.parse(remote.text))) return; }
+        }
+        const doc = roomDoc(false);
+        if (await ghPut(ROOM_FILE, b64enc(JSON.stringify(doc)), 'Huone ' + new Date().toLocaleString('fi-FI'), ghShas[ROOM_FILE] || undefined, closing === true)) {
+          roomKnown = doc.updated; state.roomSyncedAt = Date.now(); renderMemory();
+          return;
+        }
+      }
+      throw new Error('tallennus meni neljästi ristiin toisen laitteen kanssa');
+    } catch (e) {
+      setStatus('Huonetta ei voitu tallentaa GitHubiin (' + (e.message || e) + '). Uusi yritys, kun huone seuraavan kerran muuttuu tai avaat sen.');
+    } finally { roomBusy = false; }
+  }
+  // Fetch what the other device did. Cheap when nothing changed: GitHub answers 304 to a matching ETag.
+  async function pullRoom(force) {
+    if (memKind() !== 'github' || state.running || roomBusy) return false;
+    if (roomTimer) { await pushRoom(); return true; }  // our unsaved changes first; saving takes theirs along
+    if (!force && Date.now() - pullAt < 8000) return false;
+    pullAt = Date.now();
+    const joining = !!(state.gh && state.gh.joining);
+    try {
+      const f = await ghGet(ROOM_FILE, joining ? null : roomEtag);
+      if (f && f.notModified) { if ((state.roomUpdated || 0) > roomKnown) scheduleRoomPush(0); return true; }
+      if (!f) { roomEtag = null; roomKnown = 0; if (state.transcript.length) scheduleRoomPush(0); return true; }
+      roomEtag = f.etag;
+      if (mergeRoom(JSON.parse(f.text), joining)) scheduleRoomPush(0);
+      return true;
+    } catch (e) { setStatus('Huonetta ei voitu hakea GitHubista (' + (e.message || e) + ').'); return false; }
+  }
+  function withLocalImages(m, local) {
+    if (local && Array.isArray(local.images) && local.images.length) return Object.assign({}, m, { images: local.images });
+    if (Array.isArray(m.imageRefs) && m.imageRefs.length) return Object.assign({}, m, { images: [], needImages: true });
+    return m;
+  }
+  // Take the shared room as it is.
+  function adoptRoom(remote) {
+    const local = new Map(state.transcript.map(m => [m.id, m]));
+    state.transcript = (remote.transcript || []).map(m => withLocalImages(m, local.get(m.id)));
+    state.session = remote.session || null;
+    state.totalCost = Number(remote.totalCost) || 0;
+    state.roomUpdated = roomKnown = Number(remote.updated) || 0;
+    persistRoomLocal();
+    renderAll(); renderCost();
+    fetchMissingImages();
+  }
+  // Bring the shared room together with ours. Returns true when ours holds something the shared file still lacks.
+  function mergeRoom(remote, preferRemote) {
+    const ru = Number(remote.updated) || 0, lu = state.roomUpdated || 0;
+    const theirs = (remote.transcript || []).filter(m => m && m.id);
+    const ours = state.transcript.filter(m => !m.pending);
+    roomKnown = ru;
+    if (!ours.length || !theirs.length) {
+      // One side is empty: a cleared room or a new browser. The newer side wins; a browser joining the room takes the shared one.
+      if (!ours.length && !theirs.length) return lu > ru;
+      if (ru > lu || (preferRemote && theirs.length)) { adoptRoom(remote); return false; }
+      return true;
+    }
+    const sameEvening = !!(state.session && remote.session && state.session.started === remote.session.started);
+    if (!sameEvening) {
+      if (preferRemote || ru > lu) { adoptRoom(remote); return false; }
+      return true;  // our evening is newer; theirs stays in its log under Keskustelut
+    }
+    // The same evening on both devices: keep every message from both, in time order.
+    const ourIds = new Set(state.transcript.map(m => m.id)), theirIds = new Set(theirs.map(m => m.id));
+    const added = theirs.filter(m => !ourIds.has(m.id));
+    const extra = ours.some(m => !theirIds.has(m.id));
+    if (added.length) state.transcript = state.transcript.concat(added.map(m => withLocalImages(m, null))).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    if (extra) {
+      state.totalCost = Math.max(state.totalCost, Number(remote.totalCost) || 0);
+      state.roomUpdated = Math.max(Date.now(), ru + 1);
+    } else {
+      state.totalCost = Number(remote.totalCost) || state.totalCost;
+      state.roomUpdated = ru;
+    }
+    persistRoomLocal();
+    if (added.length) { renderAll(); fetchMissingImages(); }
+    renderCost();
+    return extra;
+  }
+  async function fetchMissingImages() {
+    for (const m of state.transcript) {
+      if (!m.needImages || !Array.isArray(m.imageRefs)) continue;
+      try {
+        const urls = [];
+        for (const path of m.imageRefs) {
+          const blob = await (await ghRaw(path)).blob();
+          const type = /\.png$/i.test(path) ? 'image/png' : 'image/jpeg';
+          urls.push(await new Promise((res, rej) => {
+            const fr = new FileReader();
+            fr.onload = () => res(String(fr.result).replace(/^data:[^;,]*/, 'data:' + type));
+            fr.onerror = () => rej(fr.error);
+            fr.readAsDataURL(blob);
+          }));
+        }
+        m.images = urls; delete m.needImages;
+        store.set(K.transcript, state.transcript);
+        renderMsg(m);
+      } catch (e) { /* the message stays without its images for now; the next sync tries again */ }
+    }
+  }
+  // Pages and shared settings change rarely: fetch them at most once a minute while the room is in use.
+  async function refreshShared(force) {
+    if (memKind() !== 'github' || $('#dlg').open) return;
+    if (!force && Date.now() - sharedAt < 60000) return;
+    sharedAt = Date.now();
+    try { await pullSettings(); await loadPages(); } catch (e) { /* the room still works; the next refresh tries again */ }
+  }
+  // Before anyone speaks: the latest room, pages and settings.
+  async function syncBeforeRun() {
+    if (memKind() === 'folder') return loadPages();
+    if (memKind() !== 'github') return;
+    await pullRoom(true);
+    await refreshShared();
+  }
+
+  // Phones: the one-line input grows with the text, up to 40 % of the screen.
+  const phoneQuery = window.matchMedia ? matchMedia('(max-width: 760px)') : null;
+  function fitInput() {
+    const el = $('#input');
+    if (!phoneQuery || !phoneQuery.matches) { el.style.height = ''; return; }
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight + 2, Math.round(innerHeight * 0.4)) + 'px';
+  }
+
+  // ---------- Wire up ----------
+  $('#btnAttach').addEventListener('click', () => $('#fileInput').click());
+  $('#fileInput').addEventListener('change', e => { addImageFiles(e.target.files); e.target.value = ''; });
+  $('#input').addEventListener('paste', e => {
+    const items = Array.from((e.clipboardData && e.clipboardData.items) || []);
+    const files = items.filter(it => it.kind === 'file' && /^image\//.test(it.type)).map(it => it.getAsFile()).filter(Boolean);
+    if (files.length) { e.preventDefault(); addImageFiles(files); }
+  });
+  ['dragenter', 'dragover'].forEach(ev => $('#input').addEventListener(ev, e => {
+    if (e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files')) { e.preventDefault(); $('#input').classList.add('drag'); }
+  }));
+  ['dragleave', 'drop'].forEach(ev => $('#input').addEventListener(ev, () => $('#input').classList.remove('drag')));
+  $('#input').addEventListener('drop', e => {
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) { e.preventDefault(); addImageFiles(e.dataTransfer.files); }
+  });
+  $('#btnAll').addEventListener('click', () => run('all'));
+  $('#btnAsk').addEventListener('click', () => run('one'));
+  $('#btnRounds').addEventListener('click', () => run('rounds'));
+  $('#btnStop').addEventListener('click', () => { if (state.abort) state.abort.abort(); setStatus('Pysäytetään…'); });
+  $('#btnSettings').addEventListener('click', openSettings);
+  $('#btnExport').addEventListener('click', exportMd);
+  $('#btnClear').addEventListener('click', clearRoom);
+  $('#btnCheckKey').addEventListener('click', checkKey);
+  $('#btnFolder').addEventListener('click', e => {
+    if (ghCfg()) { connectGitHub(true); return; }
+    if (LOCAL) { connectFolder(e.altKey); return; }
+    openSettings(); setTimeout(() => $('#ghRepo').focus(), 60);
+  });
+  $('#btnGhTest').addEventListener('click', testGitHubFields);
+  $('#btnGhForget').addEventListener('click', () => { $('#ghRepo').value = ''; $('#ghToken').value = ''; if (state.gh) forgetGitHub(); $('#ghState').textContent = ''; });
+  $('#btnNotes').addEventListener('click', eveningNotes);
+  $('#input').addEventListener('input', fitInput);
+  const masthead = document.querySelector('.masthead'), topBar = document.querySelector('header.top');
+  if (masthead && topBar && 'IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => topBar.classList.toggle('stuck', !e.isIntersecting)).observe(masthead);
+  }
+  // Leaving the page or switching apps on the phone: save now. Coming back: fetch what the other device did.
+  const flushSaves = () => {
+    if (roomTimer) pushRoom(true);
+    if (autosaveTimer) { clearTimeout(autosaveTimer); autosave(); }
+  };
+  window.addEventListener('pagehide', flushSaves);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushSaves();
+    else if (memKind() === 'github') { pullRoom(); refreshShared(); }
+  });
+  window.addEventListener('focus', () => { if (memKind() === 'github') pullRoom(); });
+  // While the room is on screen, look for the other device's messages now and then (304 answers cost nothing).
+  setInterval(() => { if (document.visibilityState === 'visible' && memKind() === 'github') pullRoom(); }, 45000);
+  $('#input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); run('all'); }
+  });
+  $('#settingsForm').addEventListener('submit', () => applySettings());
+  document.querySelectorAll('#dlg [data-close]').forEach(b => b.addEventListener('click', () => $('#dlg').close()));
+  $('#log').addEventListener('click', e => {
+    const im = e.target.closest('.imgs img');
+    if (im) { im.classList.toggle('zoom'); return; }
+    const n = e.target.closest('.name.blind');
+    if (!n) return;
+    state.revealed.add(n.dataset.reveal);
+    const m = state.transcript.find(x => x.id === n.dataset.reveal);
+    if (m) renderMsg(m);
+  });
+
+  renderChips(); renderAskWho(); renderAll(); renderCost();
+  loadModels();
+  // The web version connects to GitHub; the local file version restores its folder.
+  // Safe mode: Moonglow.html#nokansio opens the room without restoring the folder connection.
+  if (ghCfg()) connectGitHub(false);
+  else if (LOCAL && !/nokansio/.test(location.hash)) restoreFolder();
+  else renderMemory();
+  if (phoneQuery && phoneQuery.matches) $('#input').placeholder = 'Kirjoita huoneeseen…';
+  if (!state.key) setTimeout(openSettings, 300);
+})();
+</script>
+</body>
+</html>
