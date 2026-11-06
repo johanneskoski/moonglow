@@ -1936,9 +1936,16 @@
   // The strip is as tall as the clock area. It turns dark only once the painting has scrolled out from under the clock,
   // read straight from the scroll position so every browser gives the same answer.
   const shade = document.querySelector('.statusbar-shade');
+  // Since iOS 26.1 the phone paints the clock area itself, in the page's theme colour. While the painting is on
+  // screen on a phone, the theme colour is the painting's sky where it meets the clock area; otherwise the page colour.
+  const SKY = '#352b3f';
+  const themeMetas = Array.from(document.querySelectorAll('meta[name="theme-color"]'));
+  themeMetas.forEach(m => { m.dataset.page = m.content; });
   function updateShade() {
-    const inset = shade.offsetHeight;
-    document.documentElement.classList.toggle('cover-gone', inset > 0 && masthead.getBoundingClientRect().bottom <= inset);
+    const inset = shade.offsetHeight, bottom = masthead.getBoundingClientRect().bottom;
+    document.documentElement.classList.toggle('cover-gone', inset > 0 && bottom <= inset);
+    const sky = window.innerWidth <= 760 && bottom > inset;
+    themeMetas.forEach(m => { const c = sky ? SKY : m.dataset.page; if (m.content !== c) m.content = c; });
   }
   if (masthead && shade) {
     ['scroll', 'resize', 'load'].forEach(ev => window.addEventListener(ev, updateShade, { passive: true }));
