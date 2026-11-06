@@ -7,7 +7,7 @@
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141417">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Moonglow">
 <meta name="robots" content="noindex, nofollow">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -70,6 +70,12 @@
   .masthead h1 img { display: block; width: 289px; max-width: 100%; height: auto; }
   .masthead .motto { margin: 9px 0 0; color: var(--motto); font-size: 13px; line-height: 18px; }
   .masthead .banner { display: block; width: 100%; height: auto; margin-top: 13px; border-radius: var(--radius); }
+  /* Phone cover (Johannes's iPhone Max mockup 6.11.2026): the painting edge to edge, the logo and the motto in its sky. */
+  .cover { display: none; }
+  /* Under the clock of the home-screen app: clear over the painting, dark once the conversation scrolls there. */
+  .statusbar-shade { position: fixed; top: 0; left: 0; right: 0; height: var(--sat, env(safe-area-inset-top, 0px)); background: #141417;
+    opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 30; }
+  .cover-gone .statusbar-shade { opacity: 1; }
   /* Toolbar: participants and costs on the left, actions on the right. Sticks to the top once the title page is gone. */
   header.top {
     position: sticky; top: 0; z-index: 5;
@@ -234,11 +240,20 @@
 
   .composer-inner { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
   @media (max-width: 760px) {
-    .masthead { padding-top: 16px; }
+    .masthead { max-width: none; padding: 0; }
+    .masthead > h1, .masthead > .motto, .masthead > .banner { display: none; }
+    .cover { display: block; position: relative; }
+    .cover-art { display: block; width: 100%; height: auto; }
+    /* Logo and motto as placed in the mockup: 33 of 440 points from the left, 98 from the top, 373 wide. */
+    .masthead .cover h1 { position: absolute; display: block; margin: 0; left: 7.5%; top: 13.33%; width: 84.77%; line-height: 0; }
+    .masthead .cover h1 img { display: block; width: 100%; height: auto; }
     /* Phones: the toolbar stays under the title page instead of following along, and the composer buttons
        fit on one row you can swipe sideways, so most of the screen is left for reading. */
     header.top { position: static; }
-    .top-inner { justify-content: flex-start; padding: 10px 16px 4px; gap: 6px; }
+    /* 17 points above and below the participants, as in the mockup. (The status bar shares a class name
+       with the composer's status line and inherited its 6 px top margin; on phones it goes.) */
+    .top-inner { justify-content: flex-start; padding: 17px 16px 4px; row-gap: 17px; column-gap: 6px; }
+    .top-inner .bar.status { margin-top: 0; }
     .top-inner .bar { gap: 6px; }
     .composer-inner .row::-webkit-scrollbar { display: none; }
     /* iPhone zooms into fields with text smaller than 16px. */
@@ -259,10 +274,15 @@
 </style>
 </head>
 <body>
+<div class="statusbar-shade" aria-hidden="true"></div>
 <div class="masthead">
-  <h1><img src="moonglow_logo.png" width="289" height="68" alt="Moonglow" onerror="this.replaceWith('Moonglow')"></h1>
+  <h1><img src="moonglow_logo.png" width="289" height="68" alt="Moonglow" loading="lazy" onerror="this.replaceWith('Moonglow')"></h1>
   <p class="motto">Samojen tähtien alla.</p>
-  <img class="banner" src="sunset_fellowship.jpg" width="850" height="345" alt="Aionin maalaus: neljä kulkijaa merenrannan kalliolla katsoo auringonlaskua." onerror="this.remove()">
+  <img class="banner" src="sunset_fellowship.jpg" width="850" height="345" alt="Aionin maalaus: neljä kulkijaa merenrannan kalliolla katsoo auringonlaskua." loading="lazy" onerror="this.remove()">
+  <div class="cover">
+    <img class="cover-art" src="sunset_fellowship_iphone_max.jpg" width="1320" height="2198" alt="Aionin maalaus: neljä kulkijaa merenrannan kalliolla katsoo auringonlaskua." loading="lazy" onerror="this.remove()">
+    <h1><img src="moonglow_logo_iphone_max.png" width="1119" height="477" alt="Moonglow. Samojen tähtien alla." loading="lazy" onerror="this.replaceWith('Moonglow')"></h1>
+  </div>
 </div>
 <header class="top">
   <div class="top-inner">
@@ -1911,6 +1931,19 @@
   if (masthead && topBar && 'IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => topBar.classList.toggle('stuck', !e.isIntersecting)).observe(masthead);
   }
+  // The strip is as tall as the clock area, which changes when the phone turns, so the watch is renewed on resize.
+  const shade = document.querySelector('.statusbar-shade');
+  let shadeWatch = null, shadeInset = -1;
+  function watchCover() {
+    const inset = shade.offsetHeight;
+    if (inset === shadeInset) return;
+    shadeInset = inset;
+    if (shadeWatch) shadeWatch.disconnect();
+    shadeWatch = new IntersectionObserver(([e]) => document.documentElement.classList.toggle('cover-gone', !e.isIntersecting),
+      { rootMargin: '-' + inset + 'px 0px 0px 0px' });
+    shadeWatch.observe(masthead);
+  }
+  if (masthead && shade && 'IntersectionObserver' in window) { watchCover(); window.addEventListener('resize', watchCover); }
   // Leaving the page or switching apps on the phone: save now. Coming back: fetch what the other device did.
   const flushSaves = () => {
     if (roomTimer) pushRoom(true);
