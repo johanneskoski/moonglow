@@ -72,8 +72,8 @@
   .masthead .banner { display: block; width: 100%; height: auto; margin-top: 13px; border-radius: var(--radius); }
   /* Phone cover (Johannes's iPhone Max mockup 6.11.2026): the painting edge to edge, the logo and the motto in its sky. */
   .cover { display: none; }
-  /* Under the clock of the home-screen app: clear over the painting, dark once the conversation scrolls there.
-     A hair darker than the page, so a screenshot shows whether a dark band is this strip or the phone's own. */
+  /* A strip under the clock of the home-screen app, as tall as the clock area (so nothing on wide screens).
+     Its colours on phones are in the phone rules below. */
   .statusbar-shade { position: fixed; top: 0; left: 0; right: 0; height: var(--sat, env(safe-area-inset-top, 0px)); background: #121215;
     opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 30; }
   .cover-gone .statusbar-shade { opacity: 1; }
@@ -249,6 +249,15 @@
     /* Logo and motto as placed in the mockup: 33 of 440 points from the left, 98 from the top, 373 wide. */
     .masthead .cover h1 { position: absolute; display: block; margin: 0; left: 7.5%; top: 13.465%; width: 84.77%; line-height: 0; }
     .masthead .cover h1 img { display: block; width: 100%; height: auto; }
+    /* Since iOS 26.1 the phone paints the area under the clock itself, in a colour it takes from the page; the
+       theme colour it ignores. Two suspects, each with its own fingerprint: the page's root background #332a3e,
+       the sky where the painting meets the clock area, and the strip fixed under the clock #372a3e, four steps
+       redder. When the conversation scrolls under the clock, the root returns to the page colour and the strip
+       to its trace colour #121215. The page itself (body) keeps its own colour throughout. */
+    html { background: #332a3e; }
+    html.cover-gone { background: var(--bg); }
+    .statusbar-shade { opacity: 1; background: #372a3e; pointer-events: auto; transition: none; }
+    .cover-gone .statusbar-shade { background: #121215; }
     /* Phones: the toolbar stays under the title page instead of following along, and the composer buttons
        fit on one row you can swipe sideways, so most of the screen is left for reading. */
     header.top { position: static; }
@@ -1938,17 +1947,18 @@
   if (masthead && topBar && 'IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => topBar.classList.toggle('stuck', !e.isIntersecting)).observe(masthead);
   }
-  // The strip is as tall as the clock area. It turns dark only once the painting has scrolled out from under the clock,
-  // read straight from the scroll position so every browser gives the same answer.
+  // The strip is as tall as the clock area. 'cover-gone' marks the painting having scrolled out from under the clock,
+  // read straight from the scroll position so every browser gives the same answer. Where the phone reports no clock
+  // area, it marks the painting having left the screen entirely.
   const shade = document.querySelector('.statusbar-shade');
-  // Since iOS 26.1 the phone paints the clock area itself, in the page's theme colour. While the painting is on
-  // screen on a phone, the theme colour is the painting's sky where it meets the clock area; otherwise the page colour.
-  const SKY = '#352b3f';
+  // iOS has ignored the theme colour since 26.1, but other phones still use it: the sky while the painting is on
+  // screen, otherwise the page colour.
+  const SKY = '#332a3e';
   const themeMetas = Array.from(document.querySelectorAll('meta[name="theme-color"]'));
   themeMetas.forEach(m => { m.dataset.page = m.content; });
   function updateShade() {
     const inset = shade.offsetHeight, bottom = masthead.getBoundingClientRect().bottom;
-    document.documentElement.classList.toggle('cover-gone', inset > 0 && bottom <= inset);
+    document.documentElement.classList.toggle('cover-gone', bottom <= inset);
     const sky = window.innerWidth <= 760 && bottom > inset;
     themeMetas.forEach(m => { const c = sky ? SKY : m.dataset.page; if (m.content !== c) m.content = c; });
   }
