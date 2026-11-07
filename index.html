@@ -78,11 +78,6 @@
   .statusbar-shade { position: fixed; top: 0; left: 0; right: 0; height: var(--sat, env(safe-area-inset-top, 0px)); background: var(--bg);
     opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 30; }
   .cover-gone .statusbar-shade { opacity: 1; }
-  /* Version mark 15 (7.11.2026), for reading screenshots: in the dark theme on phones, the composer's top line is
-     four steps bluer than the other lines. Invisible; goes once the case of the band under the clock is closed. */
-  @media (max-width: 760px) and (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) footer.composer { border-top-color: #2f2f3b; }
-  }
   /* Toolbar: participants and costs on the left, actions on the right. Sticks to the top once the title page is gone. */
   header.top {
     position: sticky; top: 0; z-index: 5;
