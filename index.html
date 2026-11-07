@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f2ec">
-<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141417">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#141617">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -77,6 +77,11 @@
   .statusbar-shade { position: fixed; top: 0; left: 0; right: 0; height: var(--sat, env(safe-area-inset-top, 0px)); background: #121215;
     opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 30; }
   .cover-gone .statusbar-shade { opacity: 1; }
+  /* Version mark 14 (7.11.2026), for reading screenshots: in the dark theme on phones, the composer's top line is
+     two steps bluer than the other lines. Invisible; goes once the case of the band under the clock is closed. */
+  @media (max-width: 760px) and (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) footer.composer { border-top-color: #2f2f39; }
+  }
   /* Toolbar: participants and costs on the left, actions on the right. Sticks to the top once the title page is gone. */
   header.top {
     position: sticky; top: 0; z-index: 5;
@@ -1951,16 +1956,11 @@
   // read straight from the scroll position so every browser gives the same answer. Where the phone reports no clock
   // area, it marks the painting having left the screen entirely.
   const shade = document.querySelector('.statusbar-shade');
-  // iOS has ignored the theme colour since 26.1, but other phones still use it: the sky while the painting is on
-  // screen, otherwise the page colour.
-  const SKY = '#332a3e';
-  const themeMetas = Array.from(document.querySelectorAll('meta[name="theme-color"]'));
-  themeMetas.forEach(m => { m.dataset.page = m.content; });
+  // The theme colour is no longer changed on the fly: it stays as written in the page, whose dark value #141617
+  // (the page colour two steps greener) shows in a screenshot whether iOS reads it when the app opens.
   function updateShade() {
     const inset = shade.offsetHeight, bottom = masthead.getBoundingClientRect().bottom;
     document.documentElement.classList.toggle('cover-gone', bottom <= inset);
-    const sky = window.innerWidth <= 760 && bottom > inset;
-    themeMetas.forEach(m => { const c = sky ? SKY : m.dataset.page; if (m.content !== c) m.content = c; });
   }
   if (masthead && shade) {
     ['scroll', 'resize', 'load'].forEach(ev => window.addEventListener(ev, updateShade, { passive: true }));
