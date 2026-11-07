@@ -244,30 +244,35 @@
     .masthead { max-width: none; padding: 0; }
     .masthead > h1, .masthead > .motto, .masthead > .banner { display: none; }
     .cover { display: block; position: relative; }
-    .cover-art { display: block; width: 100%; height: auto; aspect-ratio: 1320 / 2198; }
+    /* The picture is 2198 pixels tall; the redline shows its top 2176. */
+    .cover-art { display: block; width: 100%; height: auto; aspect-ratio: 1320 / 2176; object-fit: cover; object-position: center top; }
     /* Logo and motto as placed in the mockup: 33 of 440 points from the left, 98 from the top, 373 wide. */
-    .masthead .cover h1 { position: absolute; display: block; margin: 0; left: 7.5%; top: 13.33%; width: 84.77%; line-height: 0; }
+    .masthead .cover h1 { position: absolute; display: block; margin: 0; left: 7.5%; top: 13.465%; width: 84.77%; line-height: 0; }
     .masthead .cover h1 img { display: block; width: 100%; height: auto; }
     /* Phones: the toolbar stays under the title page instead of following along, and the composer buttons
        fit on one row you can swipe sideways, so most of the screen is left for reading. */
     header.top { position: static; }
-    /* 17 points between the painting and the participants, as in the mockup. The buttons follow 32 points lower,
-       so in the start view they stay under the composer. (The status bar shares a class name with the
-       composer's status line and inherited its 6 px top margin; on phones it goes.) */
-    .top-inner { justify-content: flex-start; padding: 17px 16px 4px; row-gap: 32px; column-gap: 6px; }
-    .top-inner .bar.status { margin-top: 0; }
+    /* Johannes's redline: 16.67-point gaps between 43.33-point rows. The participants sit centred in their row;
+       the Vie / Muisti / Asetukset row comes one gap lower, which in the start view is under the composer.
+       (The status bar shares a class name with the composer's status line and inherited its 6 px top margin.) */
+    .top-inner { justify-content: flex-start; padding: 16.67px 16px 4px; row-gap: 16.67px; column-gap: 6px; }
+    .top-inner .bar.status { margin-top: 0; min-height: 43.33px; }
     .top-inner .bar { gap: 6px; }
     .composer-inner .row::-webkit-scrollbar { display: none; }
     /* iPhone zooms into fields with text smaller than 16px. */
     textarea, input, select { font-size: 16px; }
-    .composer-inner { padding: 8px 16px calc(8px + env(safe-area-inset-bottom)); }
-    textarea#input { min-height: 44px; height: 44px; padding: 9px 12px; resize: none; }
-    .composer-inner .row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 6px; margin-top: 6px; }
+    /* Composer in the same rhythm: 16.67 above the input, 16.67 between the input and the buttons, both rows
+       43.33 tall, and below them only the home indicator area (at least 16.67 on phones without one). */
+    .composer-inner { padding: 16.67px 16px max(16.67px, var(--sab, env(safe-area-inset-bottom, 0px))); }
+    /* display: block removes the line-box space under the field, which added 6 points below it. */
+    textarea#input { display: block; min-height: 43.33px; height: 43.33px; padding: 8px 12px; resize: none; }
+    .composer-inner .row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 6px; margin-top: 16.67px; }
+    .composer-inner .row .btn, .composer-inner .row select, .composer-inner .row input[type="number"] { height: 43.33px; }
     .composer-inner .row > * { flex: none; }
     .composer-inner .btn { padding: 7px 11px; white-space: nowrap; }
     .composer-inner .hint { display: none; }
     .status:empty { display: none; }
-    .toast { bottom: calc(120px + env(safe-area-inset-bottom)); }
+    .toast { bottom: calc(150px + env(safe-area-inset-bottom)); }
   }
   @media (max-width: 560px) {
     .f-row, .f-row3 { grid-template-columns: 1fr; }
