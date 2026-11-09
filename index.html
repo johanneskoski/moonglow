@@ -110,6 +110,16 @@
     padding: 6px 10px; font-size: 13px;
   }
   .icon-btn:hover { background: var(--panel-2); }
+  /* Lines (janat), 9.11.2026: Seikkailu and Majatalo, each a room of its own. The one you are in is filled like the
+     primary button; the pill is as tall as the participant chips. The status group keeps to the left of it.
+     It also shares its class with the composer's status line and inherited that line's 6 px top margin, which set
+     the participants 3 px lower than everything else in the bar (Johannes's drawing tip, 9.11.). */
+  .top-inner .bar.status { margin-right: auto; margin-top: 0; }
+  .janat { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+  .jana { border: 0; background: transparent; color: var(--muted); border-radius: 999px; padding: 1px 10px; font-size: 13px; }
+  .jana:hover:not(:disabled):not([aria-current="true"]) { color: var(--ink); background: var(--panel-2); }
+  .jana[aria-current="true"] { background: var(--ink); color: var(--bg); cursor: default; }
+  .jana:disabled:not([aria-current="true"]) { opacity: .45; cursor: not-allowed; }
 
   /* Log */
   main { flex: 1; width: 100%; max-width: 880px; margin: 0 auto; padding: 4px 16px 8px; }
@@ -267,6 +277,10 @@
        (The status bar shares a class name with the composer's status line and inherited its 6 px top margin.) */
     .top-inner { justify-content: flex-start; padding: 16.67px 16px 4px; row-gap: 16.67px; column-gap: 6px; }
     .top-inner .bar.status { margin-top: 0; min-height: 43.33px; }
+    /* The lines get a row of their own under the participants, in the same 43.33-point rhythm, so the start view
+       stays as drawn: the painting, the participants and the composer. Vie / Muisti / Asetukset follow the lines. */
+    .top-inner .bar.janat-bar { order: 1; flex-basis: 100%; min-height: 43.33px; }
+    .top-inner .bar:last-child { order: 2; }
     .top-inner .bar { gap: 6px; }
     .composer-inner .row::-webkit-scrollbar { display: none; }
     /* iPhone zooms into fields with text smaller than 16px. */
@@ -303,6 +317,9 @@
 </div>
 <header class="top">
   <div class="top-inner">
+    <div class="bar janat-bar">
+      <div class="janat" id="janat" role="group" aria-label="Jana"></div>
+    </div>
     <div class="bar status">
       <div class="chips" id="chips" aria-label="Osallistujat"></div>
       <span class="meter" id="meter" title="Tämän huoneen kulut yhteensä">Kulut <strong id="costTotal">$0.00</strong></span>
@@ -455,6 +472,38 @@
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
     del(k) { try { localStorage.removeItem(k); } catch (e) {} },
   };
+
+  // ---------- Lines (janat) ----------
+  // Each line is a room of its own: its own conversation, costs and evening log, and its own file in the memory.
+  // The Minds, their memory pages, the settings and the key are shared. Seikkailu keeps the original storage keys,
+  // so nothing saved before the lines existed moves; Majatalo's keys end in ".majatalo". Each browser remembers its
+  // line, and Moonglow.html?jana=majatalo opens Majatalo directly.
+  const JANAT = {
+    seikkailu: { name: 'Seikkailu', gen: 'Seikkailun', ill: 'Seikkailuun', file: 'huone.json', log: 'moonglow-', title: 'Moonglow',
+      huone: 'Huone', huonetta: 'huonetta', loki: 'Keskustelu' },
+    majatalo: { name: 'Majatalo', gen: 'Majatalon', ill: 'Majataloon', file: 'majatalo.json', log: 'majatalo-', title: 'Moonglow · Majatalo',
+      huone: 'Majatalo', huonetta: 'Majataloa', loki: 'Majatalon keskustelu' },
+  };
+  const JANA_KEY = 'palaverihuone.v1.jana';
+  const jana = (() => {
+    const q = new URLSearchParams(location.search).get('jana');
+    const v = q && JANAT[q] ? q : store.get(JANA_KEY, 'seikkailu');
+    return JANAT[v] ? v : 'seikkailu';
+  })();
+  store.set(JANA_KEY, jana);
+  const K0 = Object.assign({}, K);
+  const ROOM_KEYS = ['transcript', 'cost', 'session', 'updated', 'logDirty'];
+  const janaKey = (k, j) => j === 'seikkailu' ? K0[k] : K0[k] + '.' + j;
+  ROOM_KEYS.forEach(k => { K[k] = janaKey(k, jana); });
+  // What the Minds are told in Majatalo, and how much of the adventure they see there.
+  const MAJATALO_PROMPT = 'Tämä keskustelu käydään Moonglow’n Majatalossa. Majatalo on paikka kaikelle seikkailun ulkopuoliselle: ' +
+    'arjelle, kirjoituksille, kysymyksille ja suunnitelmille. Seikkailu jatkuu omalla janallaan, eikä sitä jatketa täällä, ellei Johannes pyydä.';
+  const TAUSTA_N = 8, TAUSTA_MAX = 1600, TAUSTA_TOTAL = 6000;
+  const MAJATALO_STARTERS = [
+    'Hei kaikki! Istutaan hetkeksi Majatalon takkatulen ääreen. Mitä teille kuuluu seikkailun ulkopuolella?',
+    'Haluan lukea kanssanne tekstin, jonka liitän seuraavaksi. Kertokaa rehellisesti, mitä ajattelette.',
+    'Mihin seikkailu jäi? Kertokaa kukin omin sanoin, mitä siellä viimeksi tapahtui ja mikä siitä jäi mieleen.',
+  ];
 
   const DEFAULT_ROOM = [
     'Olette Moonglow’ssa, Johanneksen ja tekoälyjen yhteisessä huoneessa. Paikalla ovat: {osallistujat}.',
@@ -661,8 +710,9 @@
     w.className = 'welcome';
     const names = state.settings.seats.map(s => s.name).join(', ');
     w.innerHTML =
-      '<h2>Tervetuloa Moonglow’hun</h2>' +
+      '<h2>' + (jana === 'majatalo' ? 'Tervetuloa Majataloon' : 'Tervetuloa Moonglow’hun') + '</h2>' +
       '<p class="principle">Moonglow — missä rehellisyys on ymmärryksen alku, ei ihmettelyn loppu.</p>' +
+      (jana === 'majatalo' ? '<p>Majatalossa puhutaan kaikesta seikkailun ulkopuolisesta. Seikkailu odottaa omalla janallaan, ja Mielet näkevät sen viimeiset vaiheet täältäkin.</p>' : '') +
       '<p>Paikalla ovat ' + esc(names) + ' ja sinä puheenjohtajana. Kirjoita aloitus ja valitse, vastaavatko kaikki, vain yksi, vai annatko heidän keskustella keskenään muutaman kierroksen.</p>' +
       (state.key ? '' : '<p><strong>Aloita lisäämällä OpenRouter-avain asetuksista.</strong></p>') +
       (memReady() || state.ghConnecting ? '' : ghCfg() ? '<p>Muistiin ei saatu yhteyttä. Tarkista repo ja tunnus asetuksista.</p>'
@@ -670,7 +720,7 @@
         : FS_OK ? '<p>Yhdistä Palaverihuone-kansio yläpalkista, niin muistisivut ja keskustelujen automaattinen tallennus ovat käytössä.</p>' : '') +
       '<p>Aloitusideoita:</p><div class="starters"></div>';
     const box = w.querySelector('.starters');
-    STARTERS.forEach(s => {
+    (jana === 'majatalo' ? MAJATALO_STARTERS : STARTERS).forEach(s => {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'starter'; b.textContent = s;
       b.addEventListener('click', () => { const i = $('#input'); i.value = s; i.focus(); });
@@ -694,6 +744,39 @@
     });
   }
 
+  function renderJanat() {
+    const box = $('#janat');
+    box.innerHTML = '';
+    Object.keys(JANAT).forEach(j => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'jana'; b.dataset.jana = j;
+      b.textContent = JANAT[j].name;
+      if (j === jana) { b.setAttribute('aria-current', 'true'); b.title = 'Olet nyt täällä: ' + JANAT[j].name; }
+      else b.title = 'Siirry ' + JANAT[j].ill + '. ' + (j === 'majatalo'
+        ? 'Majatalossa puhutaan seikkailun ulkopuolisista asioista, ja seikkailu odottaa sillä välin.'
+        : 'Seikkailu jatkuu siitä, mihin se jäi.');
+      b.addEventListener('click', () => vaihdaJana(j));
+      box.appendChild(b);
+    });
+  }
+
+  // Moving to the other line: save what is unsaved, remember the line, open the page again.
+  let vaihtamassa = false;
+  async function vaihdaJana(j) {
+    if (j === jana || !JANAT[j] || state.running || vaihtamassa) return;
+    vaihtamassa = true;
+    document.querySelectorAll('.jana').forEach(b => { b.disabled = true; });
+    setStatus('Siirrytään ' + JANAT[j].ill + '…');
+    store.set(JANA_KEY, j);
+    try {
+      if (roomTimer) await pushRoom();
+      if (autosaveTimer) { clearTimeout(autosaveTimer); await autosave(); }
+    } catch (e) { /* the next visit saves the rest */ }
+    // A ?jana= in the address would override the choice, so it is dropped. Without one the page is simply reloaded:
+    // an address that differs only after # would not open the page again (Moonglow.html#nokansio).
+    if (location.search) location.replace(location.pathname + location.hash); else location.reload();
+  }
+
   function renderAskWho() {
     const sel = $('#askWho');
     const prev = sel.value;
@@ -709,7 +792,8 @@
   function renderCost() {
     // Total with two decimals, so $4.883 is never read as 4 883 dollars; the exact sum stays in the tooltip.
     $('#costTotal').textContent = '$' + state.totalCost.toFixed(2);
-    $('#meter').title = 'Tämän huoneen kulut yhteensä: ' + fmtCost(state.totalCost);
+    $('#meter').title = Object.keys(JANAT).map(j => JANAT[j].gen + ' kulut: ' +
+      fmtCost(j === jana ? state.totalCost : Number(store.get(janaKey('cost', j), 0)) || 0) + (j === jana ? ' (tämä jana)' : '')).join('\n');
   }
 
   function scrollToEnd() { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); }
@@ -773,6 +857,7 @@
   function buildMessages(seat, extra) {
     // Stable parts first, so the providers can cache them between turns.
     const sysParts = [state.settings.roomPrompt.replace(/\{osallistujat\}/g, participantsText())];
+    if (jana === 'majatalo') sysParts.push(majataloPart());
     if (state.pages.room) sysParts.push('## Huoneen yhteinen muistisivu\n\n' + state.pages.room);
     sysParts.push('Sinä olet ' + seat.name + ' (' + seat.model + ').' + (seat.persona ? '\n' + seat.persona : ''));
     const page = state.pages.seats[seat.id];
@@ -817,6 +902,54 @@
       ? { role: 'system', content: [{ type: 'text', text: sys, cache_control: { type: 'ephemeral' } }] }
       : { role: 'system', content: sys };
     return [sysMsg, ...out];
+  }
+
+  // ---------- Majatalo: the adventure as background ----------
+  // Read from the shared memory when it is connected (cheap when unchanged: GitHub answers 304), otherwise from this
+  // browser's own copy of Seikkailu. Only text travels; images are mentioned.
+  const tausta = { text: '', etag: null, doc: null };
+  function taustaText(list) {
+    const items = (list || []).filter(m => m && !m.error && !m.pending &&
+      (String(m.text || '').trim() || (m.imageRefs || []).length || (m.images || []).length)).slice(-TAUSTA_N);
+    // Whole messages from the newest backwards, as many as fit. A story leaves its hook at the end of a message,
+    // so a very long one keeps its beginning and its end.
+    const out = [];
+    let total = 0;
+    for (let i = items.length - 1; i >= 0; i--) {
+      const m = items[i];
+      const who = m.speaker === 'human' ? HUMAN.name : (m.name || 'Mieli');
+      let t = String(m.text || '').trim();
+      if (t.length > TAUSTA_MAX) t = t.slice(0, 900).replace(/\s+\S*$/, '') + ' […] ' + t.slice(-600).replace(/^\S*\s+/, '');
+      const n = Math.max((m.imageRefs || []).length, (m.images || []).length);
+      if (n) t += (t ? '\n' : '') + '(' + who + ' liitti ' + (n === 1 ? 'kuvan' : n + ' kuvaa') + ')';
+      const line = '[' + who + ']: ' + t;
+      if (out.length && total + line.length > TAUSTA_TOTAL) break;
+      out.unshift(line);
+      total += line.length + 2;
+    }
+    return out.join('\n\n');
+  }
+  function majataloPart() {
+    return '## Majatalo\n\n' + MAJATALO_PROMPT +
+      (tausta.text ? '\n\n### Seikkailun viimeiset vaiheet taustatiedoksi\n\n' +
+        'Nämä ovat seikkailun viimeisimmät puheenvuorot, jotta tiedätte, mihin se jäi. Ne eivät ole tämän keskustelun viestejä.\n\n' + tausta.text : '');
+  }
+  async function loadTausta() {
+    if (jana === 'seikkailu') return;
+    let doc = tausta.doc;
+    try {
+      if (memKind() === 'github') {
+        const f = await ghGet(LOGS_DIR + '/' + JANAT.seikkailu.file, tausta.etag);
+        if (!f) { doc = null; tausta.etag = null; }
+        else if (!f.notModified) { doc = JSON.parse(f.text); tausta.etag = f.etag; }
+      } else if (memKind() === 'folder') {
+        const t = await readFile(LOGS_DIR, JANAT.seikkailu.file);
+        doc = t ? JSON.parse(t) : null;
+      }
+    } catch (e) { /* this browser's own copy will do */ }
+    tausta.doc = doc;
+    const own = store.get(K0.transcript, []), ownAt = Number(store.get(K0.updated, 0)) || 0;
+    tausta.text = taustaText(doc && (Number(doc.updated) || 0) >= ownAt ? doc.transcript : own);
   }
 
   function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
@@ -999,6 +1132,7 @@
   function setRunning(on) {
     state.running = on;
     ['#btnAll', '#btnAsk', '#btnRounds', '#btnClear', '#btnNotes'].forEach(s => { $(s).disabled = on; });
+    document.querySelectorAll('.jana:not([aria-current])').forEach(b => { b.disabled = on || vaihtamassa; });
     $('#btnStop').hidden = !on;
     if (!on) setStatus('');
   }
@@ -1160,7 +1294,7 @@
   }
 
   function transcriptMd(d) {
-    const lines = ['# Moonglow – ' + d.toLocaleString('fi-FI'), ''];
+    const lines = ['# ' + JANAT[jana].title + ' – ' + d.toLocaleString('fi-FI'), ''];
     state.transcript.forEach(m => {
       if (m.error) return;
       const who = m.speaker === 'human' ? HUMAN.name : m.name + (m.model ? ' (' + m.model + ')' : '');
@@ -1172,17 +1306,17 @@
   }
 
   function exportMd() {
-    if (!state.transcript.length) { toast('Huone on vielä tyhjä.'); return; }
+    if (!state.transcript.length) { toast(JANAT[jana].huone + ' on vielä tyhjä.'); return; }
     const d = new Date();
     const blob = new Blob([transcriptMd(d)], { type: 'text/markdown;charset=utf-8' });
     const a = document.createElement('a');
-    a.download = 'moonglow-' + stamp(d) + '.md';
+    a.download = JANAT[jana].log + stamp(d) + '.md';
     a.href = URL.createObjectURL(blob);
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
 
-  const CLEAR_LABEL = 'Tyhjennä huone';
+  const CLEAR_LABEL = 'Tyhjennä ' + JANAT[jana].name;
   let clearArmed = false, clearTimer = null;
   async function clearRoom() {
     const b = $('#btnClear');
@@ -1199,14 +1333,14 @@
       clearTimeout(autosaveTimer); autosaveTimer = null;
       logged = await autosave();
       b.disabled = false;
-      if (!logged) { b.textContent = CLEAR_LABEL; toast('Iltaa ei saatu tallennettua, joten huonetta ei tyhjennetty. Yritä hetken päästä uudelleen.'); return; }
+      if (!logged) { b.textContent = CLEAR_LABEL; toast('Iltaa ei saatu tallennettua, joten ' + JANAT[jana].huonetta + ' ei tyhjennetty. Yritä hetken päästä uudelleen.'); return; }
     }
     state.transcript = []; state.totalCost = 0; state.revealed.clear();
     state.session = null; store.del(K.session);
     saveTranscript(); renderAll(); renderCost();
-    b.textContent = 'Huone tyhjennetty ✓';
+    b.textContent = JANAT[jana].name + ' tyhjennetty ✓';
     clearTimer = setTimeout(() => { b.textContent = CLEAR_LABEL; }, 2500);
-    toast(logged ? 'Huone tyhjennetty. Ilta on tallessa: ' + LOGS_DIR + '/' + state.savedName + '.' : 'Huone tyhjennetty. Vinkki: vie keskustelu talteen ennen tyhjentämistä.');
+    toast(logged ? JANAT[jana].name + ' tyhjennetty. Ilta on tallessa: ' + LOGS_DIR + '/' + state.savedName + '.' : JANAT[jana].name + ' tyhjennetty. Vinkki: vie keskustelu talteen ennen tyhjentämistä.');
   }
 
   // ---------- Images ----------
@@ -1451,10 +1585,10 @@
     const kind = memKind(), at = state.roomUpdated;
     try {
       // Seconds keep two evenings started in the same minute in separate files.
-      const name = 'moonglow-' + stamp(started) + String(started.getSeconds()).padStart(2, '0') + '.md';
-      await memWrite(LOGS_DIR, name, transcriptMd(started), 'Keskustelu ' + started.toLocaleDateString('fi-FI'));
+      const name = JANAT[jana].log + stamp(started) + String(started.getSeconds()).padStart(2, '0') + '.md';
+      await memWrite(LOGS_DIR, name, transcriptMd(started), JANAT[jana].loki + ' ' + started.toLocaleDateString('fi-FI'));
       // The folder also keeps the live room as JSON, images included: a backup and the way to move the room to GitHub.
-      if (kind === 'folder') await writeFile(LOGS_DIR, 'huone.json', JSON.stringify(roomDoc(true)));
+      if (kind === 'folder') await writeFile(LOGS_DIR, JANAT[jana].file, JSON.stringify(roomDoc(true)));
       if (state.roomUpdated === at) store.del(K.logDirty);
       state.savedAt = Date.now(); state.savedName = name;
       renderMemory();
@@ -1471,7 +1605,7 @@
   // Add a dated note under "## Huoneen muistot", creating the section if needed.
   async function appendNote(seat, text) {
     const file = pageFileName(seat);
-    const entry = '### ' + new Date().toLocaleDateString('fi-FI') + '\n' + String(text).trim() + '\n';
+    const entry = '### ' + new Date().toLocaleDateString('fi-FI') + (jana === 'seikkailu' ? '' : ' · ' + JANAT[jana].name) + '\n' + String(text).trim() + '\n';
     await memUpdate(PAGES_DIR, file, page => addNote(page, entry), seat.name + ': illan muistiinpano');
   }
 
@@ -1492,10 +1626,11 @@
     if (state.running) return;
     if (!state.key) { openSettings(); toast('Lisää ensin OpenRouter-avain.'); return; }
     if (!memReady()) { toast(LOCAL && !ghCfg() ? 'Yhdistä ensin kansio, jotta muistiinpanot voidaan tallentaa muistisivuille.' : 'Yhdistä ensin muisti, jotta muistiinpanot voidaan tallentaa muistisivuille.'); return; }
-    if (!state.transcript.length) { toast('Huone on vielä tyhjä.'); return; }
+    if (!state.transcript.length) { toast(JANAT[jana].huone + ' on vielä tyhjä.'); return; }
     const seats = enabledSeats();
     if (!seats.length) { toast('Ota ainakin yksi osallistuja mukaan.'); return; }
     await loadPages();
+    await loadTausta();
     setRunning(true);
     state.abort = new AbortController();
     const saved = [];
@@ -1525,7 +1660,7 @@
   // so the same room works on the phone and on the Mac. The token stays in this browser and goes only to api.github.com.
   const LOCAL = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   const GH_API = 'https://api.github.com';
-  const ROOM_FILE = LOGS_DIR + '/huone.json';
+  const ROOM_FILE = LOGS_DIR + '/' + JANAT[jana].file;
   const SETTINGS_FILE = 'Asetukset.json';
   const IMG_DIR = 'Kuvat';
   const ghShas = {};  // path -> sha of the version we last saw; null = the file does not exist
@@ -1791,7 +1926,7 @@
           if (remote) { roomEtag = remote.etag; if (!mergeRoom(JSON.parse(remote.text))) return; }
         }
         const doc = roomDoc(false);
-        if (await ghPut(ROOM_FILE, b64enc(JSON.stringify(doc)), 'Huone ' + new Date().toLocaleString('fi-FI'), ghShas[ROOM_FILE] || undefined, closing === true)) {
+        if (await ghPut(ROOM_FILE, b64enc(JSON.stringify(doc)), JANAT[jana].huone + ' ' + new Date().toLocaleString('fi-FI'), ghShas[ROOM_FILE] || undefined, closing === true)) {
           roomKnown = doc.updated; state.roomSyncedAt = Date.now(); renderMemory();
           return;
         }
@@ -1897,10 +2032,9 @@
   }
   // Before anyone speaks: the latest room, pages and settings.
   async function syncBeforeRun() {
-    if (memKind() === 'folder') return loadPages();
-    if (memKind() !== 'github') return;
-    await pullRoom(true);
-    await refreshShared();
+    if (memKind() === 'folder') await loadPages();
+    else if (memKind() === 'github') { await pullRoom(true); await refreshShared(); }
+    await loadTausta();
   }
 
   // Phones: the one-line input grows with the text, up to 40 % of the screen.
@@ -1993,14 +2127,18 @@
     if (m) renderMsg(m);
   });
 
-  renderChips(); renderAskWho(); renderAll(); renderCost();
+  document.title = JANAT[jana].title;
+  $('#btnClear').textContent = CLEAR_LABEL;
+  $('#btnClear').title = 'Tyhjentää tämän janan keskustelun ja kululaskurin. Toinen jana pysyy ennallaan. Kun muisti on yhdistetty, keskustelu on jo tallessa Keskustelut-kansiossa.';
+  if (jana !== 'seikkailu') $('#input').placeholder = $('#input').placeholder.replace('huoneeseen', JANAT[jana].ill);
+  renderJanat(); renderChips(); renderAskWho(); renderAll(); renderCost();
   loadModels();
   // The web version connects to GitHub; the local file version restores its folder.
   // Safe mode: Moonglow.html#nokansio opens the room without restoring the folder connection.
   if (ghCfg()) connectGitHub(false);
   else if (LOCAL && !/nokansio/.test(location.hash)) restoreFolder();
   else renderMemory();
-  if (phoneQuery && phoneQuery.matches) $('#input').placeholder = 'Kirjoita huoneeseen…';
+  if (phoneQuery && phoneQuery.matches) $('#input').placeholder = 'Kirjoita ' + (jana === 'seikkailu' ? 'huoneeseen' : JANAT[jana].ill) + '…';
   if (!state.key) setTimeout(openSettings, 300);
 })();
 </script>
