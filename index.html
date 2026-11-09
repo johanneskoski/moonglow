@@ -2002,7 +2002,9 @@
     if (!ours.length || !theirs.length) {
       // One side is empty: a cleared room or a new browser. The newer side wins; a browser joining the room takes the shared one.
       if (!ours.length && !theirs.length) return lu > ru;
-      if (ru > lu || (preferRemote && theirs.length)) { adoptRoom(remote); return false; }
+      // An empty side wins only when it is strictly newer: clearing a room makes it so. An empty room whose save
+      // failed (a full browser storage) still carries the shared stamp, and it takes the shared room instead.
+      if (ru > lu || (!ours.length && ru >= lu) || (preferRemote && theirs.length)) { adoptRoom(remote); return false; }
       return true;
     }
     const sameEvening = !!(state.session && remote.session && state.session.started === remote.session.started);
