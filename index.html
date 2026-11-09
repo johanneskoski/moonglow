@@ -190,6 +190,13 @@
   .btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
   .group { display: inline-flex; align-items: center; gap: 6px; }
+  /* Keskustelkaa and its rounds are one control (9.11.2026): one outline and one background around the button and
+     the count, so the number reads as the button's own and not as a setting for the whole row. */
+  .split { display: inline-flex; align-items: stretch; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+  .split > .btn { border: 0; border-radius: 9px 0 0 9px; }
+  .split > select { border: 0; border-left: 1px solid var(--line); border-radius: 0 9px 9px 0; background: transparent; }
+  .split > :disabled { opacity: 1; }
+  .split:has(:disabled) { opacity: .45; }
   select, input[type="number"], input[type="text"], input[type="password"] {
     border: 1px solid var(--line); border-radius: 10px; padding: 7px 9px; background: var(--panel);
   }
@@ -292,6 +299,9 @@
     textarea#input { display: block; min-height: 43.33px; height: 43.33px; padding: 8px 12px; resize: none; }
     .composer-inner .row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 6px; margin-top: 16.67px; }
     .composer-inner .row .btn, .composer-inner .row select, .composer-inner .row input[type="number"] { height: 43.33px; }
+    /* The rounds control keeps the row's height: its outline is 43.33 points tall, and the parts fill it. */
+    .composer-inner .row .split { height: 43.33px; }
+    .composer-inner .row .split > .btn, .composer-inner .row .split > select { height: auto; }
     .composer-inner .row > * { flex: none; }
     .composer-inner .btn { padding: 7px 11px; white-space: nowrap; }
     .composer-inner .hint { display: none; }
@@ -343,15 +353,26 @@
     <input type="file" id="fileInput" accept="image/*" multiple hidden>
     <div class="row">
       <button class="btn" id="btnAttach" type="button" title="Liitä kuva">📎 Kuva</button>
-      <button class="btn primary" id="btnAll" type="button">Kaikki vastaavat</button>
+      <button class="btn primary" id="btnAll" type="button" title="Jokainen Mieli vastaa kerran (⌘/Ctrl + Enter).">Kaikki vastaavat</button>
       <span class="group">
         <select id="askWho" aria-label="Kenelle"></select>
         <button class="btn" id="btnAsk" type="button">Vain hän</button>
       </span>
-      <span class="group">
+      <span class="split" title="Mielet keskustelevat keskenään valitsemasi määrän kierroksia. Jokainen puhuu kerran kierroksessa.">
         <button class="btn" id="btnRounds" type="button">Keskustelkaa</button>
-        <input type="number" id="rounds" min="1" max="20" value="2" aria-label="Kierrosten määrä">
-        <span class="hint">kierrosta</span>
+        <select id="rounds" aria-label="Kierrosten määrä">
+          <optgroup label="Jokainen Mieli puhuu kerran kierroksessa">
+            <option value="1">1 kierros</option>
+            <option value="2" selected>2 kierrosta</option>
+            <option value="3">3 kierrosta</option>
+            <option value="4">4 kierrosta</option>
+            <option value="5">5 kierrosta</option>
+            <option value="6">6 kierrosta</option>
+            <option value="7">7 kierrosta</option>
+            <option value="8">8 kierrosta</option>
+            <option value="9">9 kierrosta</option>
+          </optgroup>
+        </select>
       </span>
       <button class="btn" id="btnNotes" type="button" title="Jokainen kirjoittaa omalle muistisivulleen, mitä haluaa muistaa tästä illasta">Illan muistot</button>
       <button class="btn stop" id="btnStop" type="button" hidden>Pysäytä</button>
@@ -1060,7 +1081,7 @@
     if (state.transcript.length === 1) $('#log').innerHTML = '';
     const el = renderMsg(msg);
     el.scrollIntoView({ block: 'end', behavior: 'smooth' });
-    setStatus(seat.name + ' on äänessä…');
+    setStatus((kierrosTila ? kierrosTila + ' · ' : '') + seat.name + ' on äänessä…');
     const messages = buildMessages(seat, opts && opts.instruction);
     let ok = true;
     let lastPaint = 0;
@@ -1131,12 +1152,13 @@
 
   function setRunning(on) {
     state.running = on;
-    ['#btnAll', '#btnAsk', '#btnRounds', '#btnClear', '#btnNotes'].forEach(s => { $(s).disabled = on; });
+    ['#btnAll', '#btnAsk', '#btnRounds', '#rounds', '#btnClear', '#btnNotes'].forEach(s => { $(s).disabled = on; });
     document.querySelectorAll('.jana:not([aria-current])').forEach(b => { b.disabled = on || vaihtamassa; });
     $('#btnStop').hidden = !on;
     if (!on) setStatus('');
   }
 
+  let kierrosTila = '';  // "Kierros 2/3" while the Minds talk among themselves
   async function run(kind) {
     if (state.running) return;
     if (!state.key) { openSettings(); toast('Lisää ensin OpenRouter-avain.'); return; }
@@ -1168,12 +1190,14 @@
         const n = Math.min(20, Math.max(1, parseInt($('#rounds').value, 10) || 1));
         for (let i = 0; i < n; i++) {
           if (state.abort.signal.aborted) break;
-          setStatus('Kierros ' + (i + 1) + '/' + n);
+          kierrosTila = 'Kierros ' + (i + 1) + '/' + n;
+          setStatus(kierrosTila);
           const ok = await round(seats);
           if (!ok) break;
         }
       }
     } finally {
+      kierrosTila = '';
       setRunning(false);
       input.focus();
     }
@@ -2064,6 +2088,10 @@
   $('#btnAll').addEventListener('click', () => run('all'));
   $('#btnAsk').addEventListener('click', () => run('one'));
   $('#btnRounds').addEventListener('click', () => run('rounds'));
+  // The number of rounds chosen last time, in this browser.
+  const ROUNDS_KEY = 'palaverihuone.v1.rounds';
+  { const r = String(store.get(ROUNDS_KEY, 2)); if ($('#rounds').querySelector('option[value="' + r + '"]')) $('#rounds').value = r; }
+  $('#rounds').addEventListener('change', () => store.set(ROUNDS_KEY, Number($('#rounds').value)));
   $('#btnStop').addEventListener('click', () => { if (state.abort) state.abort.abort(); setStatus('Pysäytetään…'); });
   $('#btnSettings').addEventListener('click', openSettings);
   $('#btnExport').addEventListener('click', exportMd);
