@@ -596,6 +596,7 @@
   if (state.transcript.length && !state.session) state.session = { started: state.transcript[0].ts || Date.now() };
   // Restore: any message left pending from a reload is closed.
   state.transcript.forEach(m => { if (m.pending) { m.pending = false; m.note = m.note || 'keskeytetty'; } });
+  state.transcript.forEach(m => { if (Array.isArray(m.images)) m.images = m.images.map(cleanDataUrl); });
 
   function mergeSettings(saved) {
     const base = JSON.parse(JSON.stringify(DEFAULTS));
@@ -691,7 +692,7 @@
     else if (m.pending && !m.text) body = '<p class="typing">' + (m.thinking ? 'ajattelee' : 'kirjoittaa') + '</p>';
     else body = md(cleanOutput(m.text, m.speaker === 'human' ? null : seatById(m.speaker)));
     if (Array.isArray(m.images) && m.images.length) {
-      body += '<div class="imgs">' + m.images.map(src =>
+      body += '<div class="imgs">' + m.images.map(cleanDataUrl).map(src =>
         /^data:image\/[a-z+.-]+;base64,/i.test(src) ? '<img src="' + src + '" alt="Johanneksen liittämä kuva" loading="lazy">' : ''
       ).join('') + '</div>';
     }
@@ -2029,6 +2030,9 @@
     renderCost();
     return extra;
   }
+  // A picture as the page and the models expect it: "data:image/jpeg;base64,…". GitHub sends raw files with
+  // "; charset=utf-8", and Chrome kept that in the data URL, so its pictures from the memory were dropped.
+  function cleanDataUrl(src) { return String(src || '').replace(/^data:(image\/[a-z0-9+.-]+)(?:;[^;,]*)*;base64,/i, 'data:$1;base64,'); }
   // Images that did not arrive (a failed or interrupted fetch) are tried again after every sync of the room.
   function retryImages() { if (state.transcript.some(m => m.needImages)) fetchMissingImages(); }
   let fetchingImages = false;
@@ -2043,11 +2047,11 @@
       try {
         const urls = [];
         for (const path of m.imageRefs) {
-          const blob = await (await ghRaw(path)).blob();
           const type = /\.png$/i.test(path) ? 'image/png' : 'image/jpeg';
+          const blob = new Blob([await (await ghRaw(path)).arrayBuffer()], { type });
           urls.push(await new Promise((res, rej) => {
             const fr = new FileReader();
-            fr.onload = () => res(String(fr.result).replace(/^data:[^;,]*/, 'data:' + type));
+            fr.onload = () => res(cleanDataUrl(fr.result));
             fr.onerror = () => rej(fr.error);
             fr.readAsDataURL(blob);
           }));
