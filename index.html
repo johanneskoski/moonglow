@@ -1969,10 +1969,11 @@
     const joining = !!(state.gh && state.gh.joining);
     try {
       const f = await ghGet(ROOM_FILE, joining ? null : roomEtag);
-      if (f && f.notModified) { if ((state.roomUpdated || 0) > roomKnown) scheduleRoomPush(0); return true; }
+      if (f && f.notModified) { if ((state.roomUpdated || 0) > roomKnown) scheduleRoomPush(0); retryImages(); return true; }
       if (!f) { roomEtag = null; roomKnown = 0; if (state.transcript.length) scheduleRoomPush(0); return true; }
       roomEtag = f.etag;
       if (mergeRoom(JSON.parse(f.text), joining)) scheduleRoomPush(0);
+      retryImages();
       return true;
     } catch (e) { setStatus('Huonetta ei voitu hakea GitHubista (' + (e.message || e) + ').'); return false; }
   }
@@ -2026,7 +2027,15 @@
     renderCost();
     return extra;
   }
+  // Images that did not arrive (a failed or interrupted fetch) are tried again after every sync of the room.
+  function retryImages() { if (state.transcript.some(m => m.needImages)) fetchMissingImages(); }
+  let fetchingImages = false;
   async function fetchMissingImages() {
+    if (fetchingImages) return;
+    fetchingImages = true;
+    try { await fetchImagesNow(); } finally { fetchingImages = false; }
+  }
+  async function fetchImagesNow() {
     for (const m of state.transcript) {
       if (!m.needImages || !Array.isArray(m.imageRefs)) continue;
       try {
@@ -2044,7 +2053,7 @@
         m.images = urls; delete m.needImages;
         store.set(K.transcript, state.transcript);
         renderMsg(m);
-      } catch (e) { /* the message stays without its images for now; the next sync tries again */ }
+      } catch (e) { /* the message stays without its images for now; the next sync of the room tries again */ }
     }
   }
   // Pages and shared settings change rarely: fetch them at most once a minute while the room is in use.
