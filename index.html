@@ -1383,7 +1383,7 @@
   const TELTTA_KEY = 'palaverihuone.v1.teltta';
   const TELTTA_INTRO = 'Teltassa tuoksuu suitsuke. Ennustaja levittää pöydälle kahdeksan korttia ja katsoo sinua pitkään. ' +
     '”Kysyn sinulta seitsemän kysymystä. Oikeita vastauksia ei ole. Vastaa niin kuin itse vastaisit, niin kortit kertovat, mikä hyve sinua ohjaa.”';
-  const VASTAUSOHJE = 'Aloita vastauksesi kirjaimella A tai B. Perustele valintasi sen jälkeen yhdellä tai kahdella lauseella.';
+  const VASTAUSOHJE = 'Kerro ensin yhdellä tai kahdella lauseella, kumpi tapa on lähempänä sinua ja miksi. Kirjoita sitten viimeiselle riville valintasi muodossa Valinta: A tai Valinta: B.';
   const NIMIOHJE = 'Vastaa näin:\nNimi: Etunimi Sukunimi\nAmmatti: ammatti\n\nKerro sen jälkeen muutamalla lauseella, kuka hahmosi on.';
   const KIERROKSET = ['Ensimmäinen kierros', 'Toinen kierros', 'Viimeinen valinta'];
   const ENNUSTAJA_VARI = '#a98bd6';
@@ -1414,12 +1414,17 @@
   // The answer should begin with A or B. Failing that, one clear choice near the start will do; otherwise Johannes is asked.
   function lueValinta(text) {
     const t = String(text || '').replace(/[*_#>`]/g, '').trim();
-    let m = t.match(/^[(\[]?\s*([AB])\s*(?:[).:,\]–—-]|\s|$)/);
+    // The choice comes last, after the reasons: "Valinta: B". The last one counts.
+    const all = [...t.matchAll(/[Vv]alinta\s*[:：]?\s*\(?\s*([AB])\b/g)];
+    if (all.length) return all[all.length - 1][1];
+    const lines = t.split('\n').map(x => x.trim()).filter(Boolean);
+    let m = (lines[lines.length - 1] || '').match(/^[(\[]?\s*([AB])\s*[).:\]]?$/);
     if (m) return m[1];
-    m = t.match(/\b(?:valitsen|valintani|vastaukseni|vastaan)\s*(?:on\s*)?:?\s*(?:vaihtoehdon\s*|vaihtoehto\s*)?([AB])\b/i);
-    if (m) return m[1].toUpperCase();
-    const all = t.slice(0, 160).match(/\b[AB]\b/g) || [];
-    if (all.length && all.every(x => x === all[0])) return all[0];
+    // Answers written the old way begin with the letter.
+    m = t.match(/^[(\[]?\s*([AB])\s*(?:[).:,\]–—-]|\s|$)/);
+    if (m) return m[1];
+    m = t.match(/\b(?:valitsen|valintani on)\s*:?\s*(?:vaihtoehdon\s*|vaihtoehto\s*)?([AB])\b/);
+    if (m) return m[1];
     return null;
   }
   function lueKentta(text, label) {
@@ -1462,7 +1467,7 @@
   function telttaScroll() { const b = $('#tentDlg .dlg-body'); if (b) b.scrollTop = b.scrollHeight; }
 
   function telttaEntryHTML(e) {
-    const seat = e.who === 'mieli' ? seatById(tent.seatId) : null;
+    const seat = e.who === 'mieli' ? seatById(e.seatId || tent.seatId) : null;
     let body;
     if (e.error) body = '<p class="error">' + esc(e.error) + '</p>';
     else if (e.n) body = '<p><strong>Kysymys ' + e.n + '/7</strong></p><p>' + esc(e.tilanne) + '</p>' +
@@ -1479,7 +1484,7 @@
       let el = box.children[i];
       if (!el) { el = document.createElement('article'); box.appendChild(el); }
       el.className = 'msg';
-      el.style.setProperty('--c', e.who === 'mieli' ? ((seatById(tent.seatId) || {}).color || 'var(--muted)') : ENNUSTAJA_VARI);
+      el.style.setProperty('--c', e.who === 'mieli' ? ((seatById(e.seatId || tent.seatId) || {}).color || 'var(--muted)') : ENNUSTAJA_VARI);
       const html = telttaEntryHTML(e);
       if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; }
     });
@@ -1515,7 +1520,7 @@
     $('#tentManual').hidden = !tent.pick;
     const r = tent.result;
     $('#tentResult').hidden = !r;
-    if (r) $('#tentResultTitle').textContent = 'Hyve: ' + HYVEET[r.hyve].nimi + ' · Ennustajan ehdotus: ' + r.ehdotus;
+    if (r) $('#tentResultTitle').textContent = r.seat + ' · Hyve: ' + HYVEET[r.hyve].nimi + ' · Ennustajan ehdotus: ' + r.ehdotus;
     $('#tentStart').disabled = tent.running || !tent.seatId;
     $('#tentStart').textContent = tent.k && !tent.running ? 'Uusi käynti' : 'Astu telttaan';
     $('#tentStop').hidden = !tent.running;
@@ -1529,7 +1534,7 @@
   }
 
   async function telttaKysy(seat, msgs) {
-    const e = { who: 'mieli', text: '', pending: true };
+    const e = { who: 'mieli', seatId: seat.id, text: '', pending: true };
     tent.log.push(e); renderTent(); telttaScroll();
     let last = 0, r;
     try {
@@ -1574,16 +1579,17 @@
     state.abort = new AbortController();
     renderTent();
     const stop = () => Object.assign(new Error('keskeytetty'), { name: 'AbortError' });
-    const msgs = [{ role: 'system', content: telttaSys(seat) }];
+    // Each question is asked on its own, so an earlier letter cannot pull the next one.
+    const sys = telttaSys(seat);
     try {
       for (let n = 1; n <= 7; n++) {
         const pari = seuraavaOttelu(tent.k);
         const [x, y] = Math.random() < 0.5 ? pari : [pari[1], pari[0]];
         const q = kysymysParille(x, y);
         tent.log.push({ who: 'ennustaja', n, tilanne: q.tilanne, A: q[x], B: q[y] });
-        msgs.push({ role: 'user', content: (n === 1 ? TELTTA_INTRO + '\n\n' : '') + kysymysTeksti(n, q, x, y) + '\n\n' + VASTAUSOHJE });
+        const msgs = [{ role: 'system', content: sys },
+          { role: 'user', content: TELTTA_INTRO + '\n\n' + kysymysTeksti(n, q, x, y) + '\n\n' + VASTAUSOHJE }];
         const vastaus = await telttaKysyUudelleen(seat, msgs);
-        msgs.push({ role: 'assistant', content: vastaus });
         let v = lueValinta(vastaus);
         if (!v) v = await kysyJohannekselta();
         if (!v || state.abort.signal.aborted) throw stop();
@@ -1597,9 +1603,11 @@
       if (state.abort.signal.aborted) throw stop();
       const teksti = nimeamisTeksti(hyve);
       tent.log.push({ who: 'ennustaja', text: teksti, kuva });
-      msgs.push({ role: 'user', content: kuva
-        ? [{ type: 'text', text: teksti + '\n\n' + NIMIOHJE }, { type: 'image_url', image_url: { url: kuva } }]
-        : teksti + '\n\n' + NIMIOHJE });
+      const matka = 'Teltassa valitsit näin:\n\n' + tent.vastaukset.map(v => v.n + '. ' + v.tilanne + '\nValitsit: ' + (v.valinta === 'A' ? v.A : v.B)).join('\n\n');
+      const nimiTeksti = matka + '\n\n' + teksti + '\n\n' + NIMIOHJE;
+      const msgs = [{ role: 'system', content: sys }, { role: 'user', content: kuva
+        ? [{ type: 'text', text: nimiTeksti }, { type: 'image_url', image_url: { url: kuva } }]
+        : nimiTeksti }];
       const vastaus = await telttaKysyUudelleen(seat, msgs);
       tent.result = { seatId: seat.id, seat: seat.name, hyve, ehdotus: HYVEET[hyve].ammatti,
         nimi: lueKentta(vastaus, 'Nimi'), ammatti: lueKentta(vastaus, 'Ammatti') || HYVEET[hyve].ammatti, vastaus, ts: Date.now() };
@@ -1622,7 +1630,8 @@
   function telttaMd(r, vastaukset) {
     const lines = ['# Ennustajan teltta – ' + r.seat + ' – ' + new Date(r.ts).toLocaleString('fi-FI'), '',
       'Hyve: ' + HYVEET[r.hyve].nimi + ' · Ennustajan ehdotus: ' + r.ehdotus,
-      'Hahmo: ' + (r.nimi || '–') + (r.ammatti ? ', ' + r.ammatti : ''), ''];
+      'Hahmo: ' + (r.nimi || '–') + (r.ammatti ? ', ' + r.ammatti : ''),
+      'Muoto: jokainen kysymys esitettiin erikseen, ja Mieli perusteli ennen valintaa.', ''];
     vastaukset.forEach(v => {
       lines.push('## ' + v.n + '/7 · ' + HYVEET[v.pari[0]].nimi + ' vai ' + HYVEET[v.pari[1]].nimi, '', v.tilanne, '',
         'A) ' + v.A + ' *(' + HYVEET[v.pari[0]].nimi + ')*', 'B) ' + v.B + ' *(' + HYVEET[v.pari[1]].nimi + ')*', '',
