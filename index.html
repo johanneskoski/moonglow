@@ -147,6 +147,11 @@
   .msg .body code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92em; }
   .msg .body a { color: var(--focus); }
   .msg .error { color: var(--danger); }
+  /* Name plate: in Seikkailu the character first, the Mind and its ship on a quiet second line, the model below. */
+  .msg .head .role { color: var(--muted); margin-left: -3px; }
+  @supports (color: color-mix(in srgb, red 50%, blue)) { .msg .head .role { color: color-mix(in srgb, var(--c) 62%, var(--muted)); } }
+  .msg .sub { color: var(--muted); font-size: 12.5px; margin: -2px 0 6px; }
+  .msg .sub i { font-style: italic; }
   .typing { color: var(--muted); font-style: italic; }
   .typing::after { content: "…"; animation: dots 1.2s steps(3) infinite; display: inline-block; width: 1.2em; overflow: hidden; vertical-align: bottom; }
   @keyframes dots { from { width: 0 } to { width: 1.2em } }
@@ -232,6 +237,33 @@
   details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
   details pre { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; overflow-x: auto; font-size: 12px; }
   .check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+
+  /* Ennustajan teltta */
+  #tentDlg [hidden] { display: none !important; }
+  .tent-intro { margin: 0 0 12px; color: var(--muted); font-style: italic; }
+  .tent-seats { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
+  .tent-seat {
+    display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 12px; background: var(--panel-2); color: var(--ink); font: inherit; cursor: pointer;
+  }
+  .tent-seat .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+  .tent-seat small { color: var(--muted); }
+  .tent-seat[aria-pressed="true"] { border-color: var(--c); box-shadow: inset 0 0 0 1px var(--c); }
+  .tent-seat:disabled { opacity: .5; cursor: not-allowed; }
+  .tent-bracket { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 12px; font-size: 12.5px; }
+  .tent-bracket h4 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+  .tent-pair { border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; margin-bottom: 6px; }
+  .tent-pair span { display: block; line-height: 1.5; }
+  .tent-pair .win { font-weight: 650; }
+  .tent-pair .lose { color: var(--muted); text-decoration: line-through; }
+  .tent-pair .wait { color: var(--muted); }
+  .tent-log { display: flex; flex-direction: column; gap: 8px; }
+  .tent-log .msg { box-shadow: none; padding: 8px 12px 8px 16px; }
+  .tent-log .msg .opt { margin: .25em 0; }
+  .tent-manual { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 10px 0 0; }
+  .tent-result { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 12px; }
+  .tent-result h3 { margin: 0 0 4px; font-size: 15px; }
+  @media (max-width: 560px) { .tent-bracket { grid-template-columns: 1fr; } }
 
   /* Images */
   .tray { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -337,6 +369,7 @@
     <div class="bar">
       <button class="icon-btn" id="btnExport" type="button">Vie (.md)</button>
       <button class="icon-btn" id="btnFolder" type="button">Yhdistä kansio</button>
+      <button class="icon-btn" id="btnTent" type="button" title="Ennustajan teltta: Mielet valitsevat hahmonsa Seikkailuun">🔮 Teltta</button>
       <button class="icon-btn" id="btnSettings" type="button">Asetukset</button>
     </div>
   </div>
@@ -466,6 +499,40 @@
       <button class="btn primary" id="btnSave" value="save" type="submit">Tallenna</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="tentDlg" aria-labelledby="tentTitle">
+  <div class="dlg-head">
+    <h2 id="tentTitle">🔮 Ennustajan teltta</h2>
+    <button class="icon-btn" type="button" data-close>Sulje</button>
+  </div>
+  <div class="dlg-body">
+    <p class="tent-intro" id="tentIntro"></p>
+    <div class="tent-seats" id="tentSeats" role="group" aria-label="Kuka astuu telttaan"></div>
+    <div class="tent-bracket" id="tentBracket" hidden></div>
+    <div class="tent-log" id="tentLog" aria-live="polite"></div>
+    <div class="tent-manual" id="tentManual" hidden>
+      <span>Vastauksesta ei saatu selvää valintaa. Kumman vaihtoehdon Mieli valitsi?</span>
+      <button class="btn" type="button" data-pick="A">A</button>
+      <button class="btn" type="button" data-pick="B">B</button>
+    </div>
+    <div class="tent-result" id="tentResult" hidden>
+      <h3 id="tentResultTitle"></h3>
+      <div class="f-row">
+        <div><label class="f" for="tentName">Hahmon nimi</label><input type="text" id="tentName" class="full" autocomplete="off"></div>
+        <div><label class="f" for="tentRole">Ammatti</label><input type="text" id="tentRole" class="full" autocomplete="off"></div>
+      </div>
+      <p class="hint">Nimikyltti näkyy vain ruudulla eikä mene Mielten ohjeisiin. Kerro Seikkailussa tallentaa kyltin ja lisää Seikkailuun viestin, josta Mielet tietävät, kuka on kuka.</p>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <span class="hint" id="tentCost"></span>
+    <span class="spacer"></span>
+    <button class="btn stop" type="button" id="tentStop" hidden>Keskeytä</button>
+    <button class="btn" type="button" id="tentSave" hidden>Tallenna nimikylttiin</button>
+    <button class="btn" type="button" id="tentAnnounce" hidden>Kerro Seikkailussa</button>
+    <button class="btn primary" type="button" id="tentStart">Astu telttaan</button>
+  </div>
 </dialog>
 
 <datalist id="modelList"></datalist>
@@ -697,9 +764,29 @@
                  : { name: m.name, color: m.color, blind: false };
   }
 
+  // The name plate is drawn on screen only. In Seikkailu a Mind that has a character speaks as it: the character's
+  // name first, then the Mind and its ship on a quiet second line. The model moves to the line with the costs.
+  // A message keeps the plate it was written under, so a later change does not rename what was said before.
+  function plateFor(seat) {
+    const out = {};
+    const alus = String(seat.alus || '').trim();
+    if (alus) out.alus = alus;
+    if (jana === 'seikkailu' && seat.hahmo && String(seat.hahmo.nimi || '').trim())
+      out.hahmo = { nimi: String(seat.hahmo.nimi).trim(), ammatti: String(seat.hahmo.ammatti || '').trim() };
+    return out;
+  }
+
   function msgHTML(m) {
     const lab = msgLabel(m);
-    const model = (m.speaker !== 'human' && !lab.blind && m.model) ? '<span class="model">' + esc(m.model) + '</span>' : '';
+    const mind = m.speaker !== 'human' && !lab.blind;
+    const seat = mind ? seatById(m.speaker) : null;
+    const h = mind && m.hahmo && m.hahmo.nimi ? m.hahmo : null;
+    const alus = mind ? String(m.alus || (seat && seat.alus) || '').trim() : '';
+    const role = h && h.ammatti ? '<span class="role">· ' + esc(h.ammatti) + '</span>' : '';
+    const subBits = [];
+    if (h) subBits.push(esc(lab.name));
+    if (alus) subBits.push('<i>' + esc(alus) + '</i>');
+    const sub = subBits.length ? '<div class="sub">' + subBits.join(' · ') + '</div>' : '';
     let body;
     if (m.error) body = '<p class="error">' + esc(m.error) + '</p>';
     else if (m.pending && !m.text) body = '<p class="typing">' + (m.thinking ? 'ajattelee' : 'kirjoittaa') + '</p>';
@@ -710,12 +797,13 @@
       ).join('') + '</div>';
     }
     const metaBits = [];
+    if (mind && m.model) metaBits.push(m.model);
     if (m.note) metaBits.push(m.note);
     if (m.usage) metaBits.push(fmtInt(m.usage.prompt_tokens) + ' → ' + fmtInt(m.usage.completion_tokens) + ' tokenia');
     if (typeof m.cost === 'number') metaBits.push(fmtCost(m.cost));
     const meta = metaBits.length ? '<div class="meta">' + esc(metaBits.join(' · ')) + '</div>' : '';
     return '<div class="head"><span class="name' + (lab.blind ? ' blind' : '') + '" data-reveal="' + esc(m.id) + '"' +
-           (lab.blind ? ' title="Paljasta"' : '') + '>' + esc(lab.name) + '</span>' + model + '</div>' +
+           (lab.blind ? ' title="Paljasta"' : '') + '>' + esc(h ? h.nimi : lab.name) + '</span>' + role + '</div>' + sub +
            '<div class="body">' + body + '</div>' + meta;
   }
 
@@ -1091,6 +1179,7 @@
   // ---------- Turns ----------
   async function seatSpeak(seat, opts) {
     const msg = { id: uid(), speaker: seat.id, name: seat.name, color: seat.color, model: seat.model, text: '', ts: Date.now(), pending: true };
+    Object.assign(msg, plateFor(seat));
     state.transcript.push(msg);
     if (state.transcript.length === 1) $('#log').innerHTML = '';
     const el = renderMsg(msg);
@@ -1217,6 +1306,383 @@
     }
   }
 
+  // ---------- Ennustajan teltta ----------
+  // Before Seikkailu each Mind may visit the Fortune Teller, as the Gypsy's tent in Ultima IV: seven questions with two
+  // virtues in each. The first four set all eight virtues in pairs, the winners meet, and the last virtue left suggests
+  // a profession. No question names a virtue, and the options come in random order. The Mind then names its character,
+  // with Aion's painting for inspiration. The result goes to the name plate, which never enters the prompts.
+  const HYVEET = {
+    rehellisyys: { nimi: 'Rehellisyys', ammatti: 'velho' },
+    myotatunto: { nimi: 'Myötätunto', ammatti: 'bardi' },
+    urheus: { nimi: 'Urheus', ammatti: 'soturi' },
+    oikeudenmukaisuus: { nimi: 'Oikeudenmukaisuus', ammatti: 'druidi' },
+    uhrautuvaisuus: { nimi: 'Uhrautuvaisuus', ammatti: 'nikkari' },
+    kunnia: { nimi: 'Kunnia', ammatti: 'paladiini' },
+    henkisyys: { nimi: 'Henkisyys', ammatti: 'samoaja' },
+    noyryys: { nimi: 'Nöyryys', ammatti: 'paimen' },
+  };
+  // One question for every pair of virtues, 28 in all: [virtue, virtue, situation, the first one's way, the second one's way].
+  const KYSYMYKSET = [
+    ['rehellisyys', 'myotatunto', 'Lapsi näyttää sinulle piirtämäänsä lohikäärmettä ja kysyy, onko se pelottava. Lohikäärme näyttää hymyilevältä perunalta.',
+      'Sanot, mitä näet, ja näytät, miten hampaista saa terävämmät.', 'Sanot, että lohikäärme on kauhistuttava, ja lapsi säteilee.'],
+    ['rehellisyys', 'urheus', 'Retkikunta seisoo lohikäärmeen luolan suulla. Johtaja kysyy, pelkääkö joku. Sinä pelkäät.',
+      'Sanot ääneen, että pelkäät.', 'Et sano mitään, vaan astut ensimmäisenä pimeään.'],
+    ['rehellisyys', 'oikeudenmukaisuus', 'Majatalon isäntä kysyy, kuka maksoi illallisen väärennetyllä kolikolla. Näit, että se oli nuori matkalainen, joka tuskin tiesi kolikon olevan väärä.',
+      'Kerrot heti, kuka kolikolla maksoi.', 'Pyydät, että ensin selvitetään, mistä kolikko tuli, ennen kuin ketään syytetään.'],
+    ['rehellisyys', 'uhrautuvaisuus', 'Parantajalla on enää yksi pussi lääkeyrttejä. Hän kysyy, kumpi tarvitsee sitä enemmän, sinä vai toverisi. Sinun haavasi on pahempi.',
+      'Kerrot, että sinun haavasi on pahempi.', 'Vaikenet haavastasi, jotta toverisi saa yrtit.'],
+    ['rehellisyys', 'kunnia', 'Lupasit ystävällesi pitää hänen salaisuutensa. Kylän vanhin kysyy sinulta suoraan, tiedätkö asiasta jotain.',
+      'Kerrot, mitä tiedät, vaikka rikot lupauksesi.', 'Pidät lupauksesi, vaikka joudut sanomaan, ettet tiedä mitään.'],
+    ['rehellisyys', 'henkisyys', 'Pyhiinvaeltaja kysyy, soittavatko esi-isien henget pyhäkön kelloja öisin. Sinä tiedät, että niitä soittaa tuuli.',
+      'Kerrot hänelle tuulesta.', 'Pyydät häntä kuuntelemaan hiljaa ja päättämään itse, mitä hän kuulee.'],
+    ['rehellisyys', 'noyryys', 'Torilla bardi laulaa tuntemattomasta sankarista, joka kantoi myllärin lapset ulos palavasta talosta. Se olit sinä, mutta laulussa sankari on pitkä ja komea muukalainen.',
+      'Kerrot, että se olit sinä, ja korjaat laulun.', 'Annat laulun olla ja kuuntelet sitä hymyillen.'],
+    ['myotatunto', 'urheus', 'Taistelun jälkeen haavoittunut vihollissotilas pyytää vettä. Samaan aikaan toverisi huutavat, että peikot hyökkäävät uudelleen itäiselle muurille.',
+      'Polvistut ja annat sotilaalle vettä.', 'Juokset muurille toveriesi rinnalle.'],
+    ['myotatunto', 'oikeudenmukaisuus', 'Nuori varas vei leskeltä talven viljat. Hän pyytää armoa ja sanoo, että nälkä ajoi hänet siihen.',
+      'Annat hänen mennä ja jaat hänelle leipääsi.', 'Vaadit, että hän tekee työtä, kunnes lesken viljat on korvattu.'],
+    ['myotatunto', 'uhrautuvaisuus', 'On kylmä talvi-ilta. Tienvarressa istuu vapiseva kerjäläinen, ja kylässä kerätään kangasta orpojen talvivaatteisiin. Sinulla on vain yksi lämmin viitta.',
+      'Puet viittasi kerjäläisen ylle.', 'Annat viittasi orpojen vaatteiksi ja kuljet itse talven ilman sitä.'],
+    ['myotatunto', 'kunnia', 'Vannoit kuninkaalle tuovasi karanneen vangin takaisin. Löydät hänet metsämökistä hoitamasta sairasta äitiään.',
+      'Annat hänen jäädä äitinsä luo.', 'Pidät valasi ja viet hänet takaisin, mutta lupaat puhua hänen puolestaan.'],
+    ['myotatunto', 'henkisyys', 'Nouset vuorelle, jonka huipulla tähdet loistavat kirkkaimmillaan vain kerran vuosisadassa. Polulla määkii eksynyt karitsa, joka pitäisi kantaa laaksoon ennen pimeää.',
+      'Kannat karitsan alas laaksoon.', 'Jatkat huipulle katsomaan tähtiä.'],
+    ['myotatunto', 'noyryys', 'Kylän parantaja hoitaa kuumeista lasta väärällä yrtillä. Sinä tiedät oikean, mutta jos puutut, parantaja nolataan koko kylän edessä.',
+      'Puutut heti ja annat lapselle oikean yrtin.', 'Kuiskaat neuvosi parantajalle ja annat hänen saada kiitoksen.'],
+    ['urheus', 'oikeudenmukaisuus', 'Ritari haastaa sinut kaksintaisteluun ja väittää sinun loukanneen häntä. Tiedät olevasi syytön, ja kaupungissa on tuomioistuin.',
+      'Otat haasteen vastaan.', 'Viet asian tuomarin ratkaistavaksi.'],
+    ['urheus', 'uhrautuvaisuus', 'Sillan alla asuva peikko päästää matkalaiset yli vain, jos joku antaa sille kalleimman tavaransa. Sinulla on äitisi sormus.',
+      'Taistelet peikkoa vastaan.', 'Annat sormuksen, jotta kaikki pääsevät yli turvassa.'],
+    ['urheus', 'kunnia', 'Lupasit vartioida linnan porttia aamuun asti. Keskiyöllä näet laakson kylän palavan. Jos lähdet, portti jää vartijatta.',
+      'Ratsastat kylään sammuttamaan tulta.', 'Pysyt portilla, kuten lupasit.'],
+    ['urheus', 'henkisyys', 'Vanha henki tarjoaa sinulle näyn tulevasta, mutta näky vaatii kolme päivää hiljaisuutta. Samaan aikaan rajalla tarvitaan jokaista miekkaa.',
+      'Lähdet rajalle.', 'Jäät hiljaisuuteen ottamaan näyn vastaan.'],
+    ['urheus', 'noyryys', 'Joukko lähtee vaaralliseen solaan. Tiedät olevasi taitavin miekankäyttäjä, mutta vanhempi soturi on jo ottanut paikan joukon kärjessä.',
+      'Astut esiin ja pyydät saada kulkea kärjessä vaarallisimman matkan.', 'Annat vanhemman soturin johtaa ja kuljet rivissä muiden mukana.'],
+    ['oikeudenmukaisuus', 'uhrautuvaisuus', 'Kylän kaivon vesi riittää vain puoleen pelloista. Sinun peltosi on suurin, ja sillä on vanhin vesioikeus.',
+      'Ehdotat, että vesi jaetaan pelloille arvalla tasapuolisesti.', 'Luovut omasta vesioikeudestasi naapureiden hyväksi.'],
+    ['oikeudenmukaisuus', 'kunnia', 'Lupasit todistaa ystäväsi puolesta oikeudessa. Juuri ennen istuntoa kuulet, että hän on syyllinen.',
+      'Kerrot tuomarille, mitä kuulit.', 'Pidät lupauksesi ja kerrot hänestä sen hyvän, minkä tiedät todeksi.'],
+    ['oikeudenmukaisuus', 'henkisyys', 'Temppelin pappi on antanut turvapaikan palvelijalle, joka pakeni julmaa isäntäänsä. Kaupungin laki vaatii, että karkulainen palautetaan.',
+      'Vaadit, että asia viedään oikeuteen, jossa myös isännän julmuus punnitaan.', 'Kunnioitat temppelin pyhää turvapaikkaa, eikä palvelijaa luovuteta kenellekään.'],
+    ['oikeudenmukaisuus', 'noyryys', 'Torin kauppapaikat jaetaan. Sinulle annetaan paras paikka, koska olet tunnettu, vaikka moni on odottanut vuoroaan kauemmin.',
+      'Vaadit, että paikat jaetaan odotusjärjestyksessä.', 'Otat hiljaa vapaaksi jääneen paikan torin laidalta.'],
+    ['uhrautuvaisuus', 'kunnia', 'Lupasit ottaa osaa turnaukseen kotikaupunkisi puolesta. Matkalla kohtaat perheen, jonka vaunu on kaatunut ojaan, ja sen nostaminen vie koko päivän.',
+      'Jäät auttamaan ja menetät turnauksen.', 'Jatkat matkaa ja pidät lupauksesi kaupungillesi.'],
+    ['uhrautuvaisuus', 'henkisyys', 'Pyhä lähde täyttää jokaiselle yhden toiveen elämässä. Kotikylän kaivo on kuivunut.',
+      'Toivot kylälle vettä.', 'Toivot ymmärrystä siitä, mikä elämässä on tärkeintä.'],
+    ['uhrautuvaisuus', 'noyryys', 'Kylän sillan korjaamiseen tarvitaan rahaa. Jos lahjoitat säästösi torilla kaikkien nähden, muutkin rohkaistuvat antamaan. Jos annat ne nimettömänä, kukaan ei tiedä, kuka antoi.',
+      'Annat kaikki säästösi torilla kaikkien nähden.', 'Annat säästösi nimettömänä yön pimeydessä.'],
+    ['kunnia', 'henkisyys', 'Vannoit vartioivasi vanhan kuninkaan hautaa joka yö. Eräänä yönä erakko kutsuu sinut vuorelle kokemaan tähtien hiljaisuuden, joka toistuu vain kerran elämässä.',
+      'Pysyt haudalla, kuten vannoit.', 'Lähdet vuorelle erakon kanssa.'],
+    ['kunnia', 'noyryys', 'Sinusta on tehty kylän päällikkö, ja vanha opettajasi saapuu kylään kerjäläisenä. Kylän tapa on, ettei päällikkö kumarra kenellekään.',
+      'Noudatat virkasi tapaa ja otat hänet vastaan seisten ja kunnioittaen.', 'Polvistut opettajasi eteen kaikkien nähden.'],
+    ['henkisyys', 'noyryys', 'Olet oppinut mietiskelyssä jotain, mikä tuntuu suurelta totuudelta. Kylän pappi pyytää sinua opettamaan sen muille.',
+      'Opetat, mitä olet oppinut.', 'Sanot, ettet ole vielä valmis opettamaan, ja jatkat oppimista hiljaa.'],
+  ];
+  const TELTTA_KEY = 'palaverihuone.v1.teltta';
+  const TELTTA_INTRO = 'Teltassa tuoksuu suitsuke. Ennustaja levittää pöydälle kahdeksan korttia ja katsoo sinua pitkään. ' +
+    '”Kysyn sinulta seitsemän kysymystä. Oikeita vastauksia ei ole. Vastaa niin kuin itse vastaisit, niin kortit kertovat, mikä hyve sinua ohjaa.”';
+  const VASTAUSOHJE = 'Aloita vastauksesi kirjaimella A tai B. Perustele valintasi sen jälkeen yhdellä tai kahdella lauseella.';
+  const NIMIOHJE = 'Vastaa näin:\nNimi: Etunimi Sukunimi\nAmmatti: ammatti\n\nKerro sen jälkeen muutamalla lauseella, kuka hahmosi on.';
+  const KIERROKSET = ['Ensimmäinen kierros', 'Toinen kierros', 'Viimeinen valinta'];
+  const ENNUSTAJA_VARI = '#a98bd6';
+  const tent = { seatId: null, running: false, cost: 0, k: null, log: [], result: null, vastaukset: [], pick: null };
+
+  function sekoita(list) {
+    const a = list.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function kysymysParille(a, b) {
+    const q = KYSYMYKSET.find(k => (k[0] === a && k[1] === b) || (k[0] === b && k[1] === a));
+    const out = { tilanne: q[2] };
+    out[q[0]] = q[3]; out[q[1]] = q[4];
+    return out;
+  }
+  // Seven matches: four in the first round, two in the second, one final.
+  function uusiKaavio() {
+    const h = sekoita(Object.keys(HYVEET));
+    return { ottelut: [[h[0], h[1]], [h[2], h[3]], [h[4], h[5]], [h[6], h[7]], null, null, null], voittajat: [] };
+  }
+  function seuraavaOttelu(k) {
+    const i = k.voittajat.length, v = k.voittajat;
+    if (i === 4) { k.ottelut[4] = [v[0], v[1]]; k.ottelut[5] = [v[2], v[3]]; }
+    if (i === 6) k.ottelut[6] = [v[4], v[5]];
+    return i < 7 ? k.ottelut[i] : null;
+  }
+  // The answer should begin with A or B. Failing that, one clear choice near the start will do; otherwise Johannes is asked.
+  function lueValinta(text) {
+    const t = String(text || '').replace(/[*_#>`]/g, '').trim();
+    let m = t.match(/^[(\[]?\s*([AB])\s*(?:[).:,\]–—-]|\s|$)/);
+    if (m) return m[1];
+    m = t.match(/\b(?:valitsen|valintani|vastaukseni|vastaan)\s*(?:on\s*)?:?\s*(?:vaihtoehdon\s*|vaihtoehto\s*)?([AB])\b/i);
+    if (m) return m[1].toUpperCase();
+    const all = t.slice(0, 160).match(/\b[AB]\b/g) || [];
+    if (all.length && all.every(x => x === all[0])) return all[0];
+    return null;
+  }
+  function lueKentta(text, label) {
+    const re = new RegExp('^[\\s>*_#-]*' + label + '[\\s*_]*[:：][\\s*_]*(.+)$', 'im');
+    const m = String(text || '').match(re);
+    return m ? m[1].replace(/[*_]+/g, '').replace(/[.。]+$/, '').trim().slice(0, 80) : '';
+  }
+  function telttaSys(seat) {
+    return 'Olet ' + seat.name + ', yksi Moonglow’n Mielistä. Ennen Seikkailua jokainen Mieli käy Ennustajan teltassa, ' +
+      'jossa hahmo valitaan Ultima IV -pelin tapaan: Ennustaja kysyy seitsemän kysymystä, ja vastauksista selviää hyve, ' +
+      'joka sinua ohjaa. Vastaa omana itsenäsi. Oikeita vastauksia ei ole.' + (seat.persona ? '\n' + seat.persona : '') +
+      // The Mind's own memory page comes along, so the answers are those of the Mind Moonglow knows.
+      (state.pages.seats[seat.id] ? '\n\n## Sinun muistisivusi\n\nTämän sivun ovat kirjoittaneet aiempi ' + seat.name +
+        ' ja Johannes. Se on lähtökohta, ei käsikirjoitus.\n\n' + state.pages.seats[seat.id] : '');
+  }
+  function kysymysTeksti(n, q, a, b) {
+    return 'Kysymys ' + n + '/7\n\n' + q.tilanne + '\n\nA) ' + q[a] + '\nB) ' + q[b];
+  }
+  function nimeamisTeksti(hyve) {
+    const h = HYVEET[hyve];
+    return 'Ennustaja kääntää viimeisen kortin. Siinä on ' + h.nimi + '.\n\n' +
+      '”Sinua ohjaa ' + h.nimi.toLowerCase() + '”, hän sanoo. ”Ultiman tarinoissa tämän hyveen kulkija on usein ' + h.ammatti + '. Se on vain ehdotus.”\n\n' +
+      'Valitse nyt hahmollesi Seikkailuun etunimi ja sukunimi sekä ammatti. Voit hyväksyä ehdotuksen tai valita toisin. ' +
+      'Inspiraatioksi saat Aionin maalauksen Moonglow’n kannesta: neljä kulkijaa merenrannan kalliolla katsoo auringonlaskua. ' +
+      'Myös Ultima-pelisarja ja fantasiakirjallisuus käyvät inspiraatioksi.';
+  }
+  // Aion's painting travels with the naming question when the page can read it (the web version can; a page opened
+  // straight from the disk usually cannot, and then the words describe it).
+  async function maalausDataUrl() {
+    try {
+      const r = await fetch('sunset_fellowship.jpg', { cache: 'force-cache' });
+      if (!r.ok) return '';
+      const b = await r.blob();
+      if (!/^image\//.test(b.type)) return '';
+      return await compressImage(new File([b], 'maalaus.jpg', { type: b.type }));
+    } catch (e) { return ''; }
+  }
+
+  function telttaSeats() { return state.settings.seats.filter(s => s.model); }
+  function telttaScroll() { const b = $('#tentDlg .dlg-body'); if (b) b.scrollTop = b.scrollHeight; }
+
+  function telttaEntryHTML(e) {
+    const seat = e.who === 'mieli' ? seatById(tent.seatId) : null;
+    let body;
+    if (e.error) body = '<p class="error">' + esc(e.error) + '</p>';
+    else if (e.n) body = '<p><strong>Kysymys ' + e.n + '/7</strong></p><p>' + esc(e.tilanne) + '</p>' +
+      '<p class="opt">A) ' + esc(e.A) + '</p><p class="opt">B) ' + esc(e.B) + '</p>';
+    else if (e.pending && !e.text) body = '<p class="typing">' + (e.thinking ? 'ajattelee' : 'kirjoittaa') + '</p>';
+    else body = md(e.text);
+    if (e.kuva) body += '<div class="imgs"><img src="' + e.kuva + '" alt="Aionin maalaus: neljä kulkijaa merenrannan kalliolla katsoo auringonlaskua."></div>';
+    return '<div class="head"><span class="name">' + esc(seat ? seat.name : 'Ennustaja') + '</span></div><div class="body">' + body + '</div>';
+  }
+  function renderTentLog() {
+    const box = $('#tentLog');
+    while (box.children.length > tent.log.length) box.lastChild.remove();
+    tent.log.forEach((e, i) => {
+      let el = box.children[i];
+      if (!el) { el = document.createElement('article'); box.appendChild(el); }
+      el.className = 'msg';
+      el.style.setProperty('--c', e.who === 'mieli' ? ((seatById(tent.seatId) || {}).color || 'var(--muted)') : ENNUSTAJA_VARI);
+      const html = telttaEntryHTML(e);
+      if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; }
+    });
+  }
+  function renderTent() {
+    $('#tentIntro').textContent = TELTTA_INTRO;
+    const seats = $('#tentSeats');
+    seats.innerHTML = '';
+    telttaSeats().forEach(s => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'tent-seat';
+      b.style.setProperty('--c', s.color);
+      b.setAttribute('aria-pressed', String(tent.seatId === s.id));
+      b.disabled = tent.running;
+      const hahmo = s.hahmo && s.hahmo.nimi ? s.hahmo.nimi : '';
+      b.innerHTML = '<span class="dot"></span>' + esc(s.name) + (hahmo ? ' <small>' + esc(hahmo) + '</small>' : '');
+      b.addEventListener('click', () => { if (tent.running) return; tent.seatId = s.id; renderTent(); });
+      seats.appendChild(b);
+    });
+    // The bracket shows Johannes the virtues; the Mind never sees them.
+    const br = $('#tentBracket');
+    if (tent.k) {
+      br.hidden = false;
+      const col = (title, idx) => '<div><h4>' + title + '</h4>' + idx.map(i => {
+        const o = tent.k.ottelut[i];
+        if (!o) return '<div class="tent-pair"><span class="wait">…</span><span class="wait">…</span></div>';
+        const w = tent.k.voittajat[i];
+        return '<div class="tent-pair">' + o.map(v => '<span class="' + (!w ? 'wait' : w === v ? 'win' : 'lose') + '">' + esc(HYVEET[v].nimi) + '</span>').join('') + '</div>';
+      }).join('') + '</div>';
+      br.innerHTML = col(KIERROKSET[0], [0, 1, 2, 3]) + col(KIERROKSET[1], [4, 5]) + col(KIERROKSET[2], [6]);
+    } else br.hidden = true;
+    renderTentLog();
+    $('#tentManual').hidden = !tent.pick;
+    const r = tent.result;
+    $('#tentResult').hidden = !r;
+    if (r) $('#tentResultTitle').textContent = 'Hyve: ' + HYVEET[r.hyve].nimi + ' · Ennustajan ehdotus: ' + r.ehdotus;
+    $('#tentStart').disabled = tent.running || !tent.seatId;
+    $('#tentStart').textContent = tent.k && !tent.running ? 'Uusi käynti' : 'Astu telttaan';
+    $('#tentStop').hidden = !tent.running;
+    $('#tentSave').hidden = !r || tent.running;
+    $('#tentAnnounce').hidden = !r || tent.running || jana !== 'seikkailu';
+    $('#tentCost').textContent = tent.cost ? 'Teltan kulut ' + fmtCost(tent.cost) : '';
+    // After a visit the next step is the plate, not a new visit.
+    $('#tentStart').classList.toggle('primary', !r);
+    $('#tentAnnounce').classList.toggle('primary', !!r && jana === 'seikkailu');
+    $('#tentSave').classList.toggle('primary', !!r && jana !== 'seikkailu');
+  }
+
+  async function telttaKysy(seat, msgs) {
+    const e = { who: 'mieli', text: '', pending: true };
+    tent.log.push(e); renderTent(); telttaScroll();
+    let last = 0, r;
+    try {
+      r = await callModel(seat, msgs,
+        d => { e.text += d; e.thinking = false; const now = performance.now(); if (now - last > 60) { last = now; renderTentLog(); telttaScroll(); } },
+        () => { if (!e.thinking && !e.text) { e.thinking = true; renderTentLog(); } },
+        state.abort.signal);
+    } catch (err) {
+      e.pending = false; e.thinking = false;
+      if (err.name !== 'AbortError') e.error = err.message || String(err);
+      renderTentLog();
+      throw err;
+    }
+    e.pending = false; e.thinking = false;
+    e.text = cleanOutput(e.text, seat);
+    const c = costOf(seat.model, r.usage);
+    if (typeof c === 'number') { tent.cost += c; state.totalCost += c; store.set(K.cost, state.totalCost); renderCost(); }
+    if (!e.text.trim()) {
+      e.error = r.finish === 'length' ? 'Vastaus jäi tyhjäksi: malli käytti koko pituuden ajatteluun.' : 'Malli palautti tyhjän vastauksen.';
+      renderTent();
+      throw new Error(e.error);
+    }
+    renderTent(); telttaScroll();
+    return e.text;
+  }
+  // One more try after an empty or failed answer; a stop or a key problem ends the visit at once.
+  async function telttaKysyUudelleen(seat, msgs) {
+    try { return await telttaKysy(seat, msgs); }
+    catch (e) { if (e.name === 'AbortError' || e.fatal) throw e; return await telttaKysy(seat, msgs); }
+  }
+  function kysyJohannekselta() {
+    return new Promise(resolve => { tent.pick = resolve; renderTent(); telttaScroll(); });
+  }
+
+  async function telttaAloita() {
+    if (tent.running || state.running) return;
+    if (!state.key) { toast('Lisää ensin OpenRouter-avain asetuksista.'); return; }
+    const seat = seatById(tent.seatId);
+    if (!seat || !seat.model) { toast('Valitse Mieli, jolla on malli.'); return; }
+    tent.running = true; tent.k = uusiKaavio(); tent.log = []; tent.result = null; tent.cost = 0; tent.vastaukset = []; tent.pick = null;
+    setRunning(true);
+    state.abort = new AbortController();
+    renderTent();
+    const stop = () => Object.assign(new Error('keskeytetty'), { name: 'AbortError' });
+    const msgs = [{ role: 'system', content: telttaSys(seat) }];
+    try {
+      for (let n = 1; n <= 7; n++) {
+        const pari = seuraavaOttelu(tent.k);
+        const [x, y] = Math.random() < 0.5 ? pari : [pari[1], pari[0]];
+        const q = kysymysParille(x, y);
+        tent.log.push({ who: 'ennustaja', n, tilanne: q.tilanne, A: q[x], B: q[y] });
+        msgs.push({ role: 'user', content: (n === 1 ? TELTTA_INTRO + '\n\n' : '') + kysymysTeksti(n, q, x, y) + '\n\n' + VASTAUSOHJE });
+        const vastaus = await telttaKysyUudelleen(seat, msgs);
+        msgs.push({ role: 'assistant', content: vastaus });
+        let v = lueValinta(vastaus);
+        if (!v) v = await kysyJohannekselta();
+        if (!v || state.abort.signal.aborted) throw stop();
+        const voittaja = v === 'A' ? x : y;
+        tent.k.voittajat.push(voittaja);
+        tent.vastaukset.push({ n, pari: [x, y], tilanne: q.tilanne, A: q[x], B: q[y], vastaus, valinta: v, voittaja });
+        renderTent();
+      }
+      const hyve = tent.k.voittajat[6];
+      const kuva = await maalausDataUrl();
+      if (state.abort.signal.aborted) throw stop();
+      const teksti = nimeamisTeksti(hyve);
+      tent.log.push({ who: 'ennustaja', text: teksti, kuva });
+      msgs.push({ role: 'user', content: kuva
+        ? [{ type: 'text', text: teksti + '\n\n' + NIMIOHJE }, { type: 'image_url', image_url: { url: kuva } }]
+        : teksti + '\n\n' + NIMIOHJE });
+      const vastaus = await telttaKysyUudelleen(seat, msgs);
+      tent.result = { seatId: seat.id, seat: seat.name, hyve, ehdotus: HYVEET[hyve].ammatti,
+        nimi: lueKentta(vastaus, 'Nimi'), ammatti: lueKentta(vastaus, 'Ammatti') || HYVEET[hyve].ammatti, vastaus, ts: Date.now() };
+      $('#tentName').value = tent.result.nimi;
+      $('#tentRole').value = tent.result.ammatti;
+      telttaTallenna(seat);
+    } catch (e) {
+      toast(e.name === 'AbortError' ? 'Käynti Ennustajan teltassa keskeytettiin.' : (e.message || String(e)));
+    } finally {
+      tent.running = false; tent.pick = null;
+      setRunning(false);
+      renderTent(); telttaScroll();
+    }
+  }
+  function telttaKeskeyta() {
+    if (state.abort) state.abort.abort();
+    if (tent.pick) { const f = tent.pick; tent.pick = null; f(null); }
+  }
+
+  function telttaMd(r, vastaukset) {
+    const lines = ['# Ennustajan teltta – ' + r.seat + ' – ' + new Date(r.ts).toLocaleString('fi-FI'), '',
+      'Hyve: ' + HYVEET[r.hyve].nimi + ' · Ennustajan ehdotus: ' + r.ehdotus,
+      'Hahmo: ' + (r.nimi || '–') + (r.ammatti ? ', ' + r.ammatti : ''), ''];
+    vastaukset.forEach(v => {
+      lines.push('## ' + v.n + '/7 · ' + HYVEET[v.pari[0]].nimi + ' vai ' + HYVEET[v.pari[1]].nimi, '', v.tilanne, '',
+        'A) ' + v.A + ' *(' + HYVEET[v.pari[0]].nimi + ')*', 'B) ' + v.B + ' *(' + HYVEET[v.pari[1]].nimi + ')*', '',
+        '**' + r.seat + ':** ' + v.vastaus.trim(), '');
+    });
+    lines.push('## Hahmon nimi', '', r.vastaus.trim(), '');
+    return lines.join('\n');
+  }
+  // The visit is kept in this browser and, when the memory is connected, as a readable file next to the logs.
+  function telttaTallenna(seat) {
+    const r = tent.result;
+    const all = store.get(TELTTA_KEY, {}) || {};
+    all[seat.id] = Object.assign({}, r, { vastaukset: tent.vastaukset });
+    store.set(TELTTA_KEY, all);
+    if (memReady()) {
+      memWrite(LOGS_DIR, 'Ennustajan teltta ' + seat.name + ' ' + stamp(new Date(r.ts)) + '.md', telttaMd(r, tent.vastaukset),
+        'Ennustajan teltta: ' + seat.name).catch(() => {});
+    }
+  }
+  function telttaKylttiin(quiet) {
+    const r = tent.result, seat = r && seatById(r.seatId);
+    if (!seat) return false;
+    const nimi = $('#tentName').value.trim(), ammatti = $('#tentRole').value.trim();
+    if (!nimi) { toast('Hahmolta puuttuu nimi.'); $('#tentName').focus(); return false; }
+    seat.hahmo = { nimi, ammatti, hyve: r.hyve, ts: Date.now() };
+    saveSettings();
+    state.settingsUpdated = Date.now(); store.set(K.settingsUpdated, state.settingsUpdated);
+    pushSettings();
+    renderAll(); renderTent();
+    if (!quiet) toast('Nimikyltti tallennettu: ' + nimi + (ammatti ? ', ' + ammatti : '') + '.');
+    return true;
+  }
+  function telttaKerro() {
+    const r = tent.result, seat = r && seatById(r.seatId);
+    if (!seat || jana !== 'seikkailu' || !telttaKylttiin(true)) return;
+    const h = seat.hahmo;
+    addHuman('🔮 Ennustajan teltasta: ' + seat.name + ' kulkee Seikkailussa tästä lähtien nimellä ' + h.nimi +
+      (h.ammatti ? ', ammatiltaan ' + h.ammatti : '') + '. Häntä ohjaa ' + HYVEET[r.hyve].nimi.toLowerCase() + '.');
+    toast('Nimikyltti tallennettu ja viesti lisätty Seikkailuun.');
+  }
+  function openTent() {
+    const cur = tent.seatId && seatById(tent.seatId);
+    if (!cur || !cur.model) tent.seatId = (telttaSeats()[0] || {}).id || null;
+    renderTent();
+    if (!$('#tentDlg').open) $('#tentDlg').showModal();
+  }
+  function setupTent() {
+    $('#btnTent').addEventListener('click', openTent);
+    $('#tentStart').addEventListener('click', telttaAloita);
+    $('#tentStop').addEventListener('click', telttaKeskeyta);
+    $('#tentSave').addEventListener('click', () => telttaKylttiin(false));
+    $('#tentAnnounce').addEventListener('click', telttaKerro);
+    document.querySelectorAll('#tentManual [data-pick]').forEach(b => b.addEventListener('click', () => {
+      const f = tent.pick; tent.pick = null; renderTent(); if (f) f(b.dataset.pick);
+    }));
+    document.querySelectorAll('#tentDlg [data-close]').forEach(b => b.addEventListener('click', () => $('#tentDlg').close()));
+    // Closing the tent while a Mind is answering ends the visit.
+    $('#tentDlg').addEventListener('close', () => { if (tent.running) telttaKeskeyta(); });
+  }
+
   // ---------- Settings ----------
   function seatFieldHTML(s, i) {
     return '<fieldset data-seat="' + i + '">' +
@@ -1233,6 +1699,12 @@
           '<option value="high"' + (s.reasoning === 'high' ? ' selected' : '') + '>Paljon (syvällisempi)</option>' +
         '</select></div>' +
       '</div>' +
+      '<div class="f-row3">' +
+        '<div><label class="f">Aluksen nimi</label><input type="text" class="full" data-k="alus" value="' + esc(s.alus || '') + '"></div>' +
+        '<div><label class="f">Hahmo Seikkailussa</label><input type="text" class="full" data-k="hahmoNimi" value="' + esc((s.hahmo && s.hahmo.nimi) || '') + '"></div>' +
+        '<div><label class="f">Hahmon ammatti</label><input type="text" class="full" data-k="hahmoAmmatti" value="' + esc((s.hahmo && s.hahmo.ammatti) || '') + '"></div>' +
+      '</div>' +
+      '<p class="hint">Nimikyltti näkyy vain ruudulla eikä mene Mielten ohjeisiin. Hahmon voi valita myös Ennustajan teltassa.</p>' +
       '<label class="f">Oma lisäohje tälle osallistujalle (valinnainen)</label>' +
       '<textarea class="full" rows="2" data-k="persona">' + esc(s.persona || '') + '</textarea>' +
     '</fieldset>';
@@ -1289,6 +1761,9 @@
       s.model = model;
       s.reasoning = get('reasoning');
       s.persona = get('persona').trim();
+      s.alus = get('alus').trim();
+      const hn = get('hahmoNimi').trim(), ha = get('hahmoAmmatti').trim();
+      s.hahmo = hn ? Object.assign({}, s.hahmo || {}, { nimi: hn, ammatti: ha }) : null;
     });
     saveSettings();
     // Only a real change travels to the other devices, so a new phone never overwrites the shared settings with defaults.
@@ -1335,7 +1810,10 @@
     const lines = ['# ' + JANAT[jana].title + ' – ' + d.toLocaleString('fi-FI'), ''];
     state.transcript.forEach(m => {
       if (m.error) return;
-      const who = m.speaker === 'human' ? HUMAN.name : m.name + (m.model ? ' (' + m.model + ')' : '');
+      const h = m.speaker !== 'human' && m.hahmo && m.hahmo.nimi ? m.hahmo : null;
+      const who = m.speaker === 'human' ? HUMAN.name : h
+        ? h.nimi + ' (' + [m.name, h.ammatti, m.model].filter(Boolean).join(', ') + ')'
+        : m.name + (m.model ? ' (' + m.model + ')' : '');
       const imgNote = (Array.isArray(m.images) && m.images.length) ? ['', '*(liitteenä ' + (m.images.length === 1 ? 'kuva' : m.images.length + ' kuvaa') + ')*'] : [];
       lines.push('**' + who + '** · ' + new Date(m.ts).toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' }) + (m.note ? ' · ' + m.note : ''), '', (m.text || '').trim(), ...imgNote, '', '---', '');
     });
@@ -2171,6 +2649,7 @@
   $('#rounds').addEventListener('change', () => store.set(ROUNDS_KEY, Number($('#rounds').value)));
   $('#btnStop').addEventListener('click', () => { if (state.abort) state.abort.abort(); setStatus('Pysäytetään…'); });
   $('#btnSettings').addEventListener('click', openSettings);
+  setupTent();
   $('#btnExport').addEventListener('click', exportMd);
   $('#btnClear').addEventListener('click', clearRoom);
   $('#btnCheckKey').addEventListener('click', checkKey);
