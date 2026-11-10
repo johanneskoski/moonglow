@@ -597,6 +597,7 @@
   // Restore: any message left pending from a reload is closed.
   state.transcript.forEach(m => { if (m.pending) { m.pending = false; m.note = m.note || 'keskeytetty'; } });
   state.transcript.forEach(m => { if (Array.isArray(m.images)) m.images = m.images.map(cleanDataUrl); });
+  state.transcript.forEach(m => { if (Array.isArray(m.imageRefs) && m.imageRefs.length && !(Array.isArray(m.images) && m.images.length)) m.needImages = true; });
 
   function mergeSettings(saved) {
     const base = JSON.parse(JSON.stringify(DEFAULTS));
@@ -617,8 +618,20 @@
 
   function saveSettings() { store.set(K.settings, state.settings); }
   let warnedFull = false;
+  // A picture that is in the memory (it has a reference under Kuvat/) lives in the picture store, not in the saved
+  // text; the saved message keeps the reference and asks for the picture again when it opens.
+  function slimTranscript(list) {
+    return (list || []).map(m => {
+      const imgs = Array.isArray(m.images) ? m.images : [], refs = Array.isArray(m.imageRefs) ? m.imageRefs : [];
+      if (!imgs.length || refs.length < imgs.length || !refs.slice(0, imgs.length).every(Boolean)) return m;
+      const c = Object.assign({}, m);
+      delete c.images; c.needImages = true;
+      return c;
+    });
+  }
+  function saveLocalTranscript() { return store.set(K.transcript, slimTranscript(state.transcript)); }
   function saveTranscript() {
-    const ok = store.set(K.transcript, state.transcript);
+    const ok = saveLocalTranscript();
     store.set(K.cost, state.totalCost);
     if (state.transcript.length && !state.session) { state.session = { started: Date.now() }; store.set(K.session, state.session); }
     state.roomUpdated = Date.now(); store.set(K.updated, state.roomUpdated);
@@ -1910,7 +1923,7 @@
     };
   }
   function persistRoomLocal() {
-    store.set(K.transcript, state.transcript);
+    saveLocalTranscript();
     store.set(K.cost, state.totalCost);
     if (state.session) store.set(K.session, state.session); else store.del(K.session);
     store.set(K.updated, state.roomUpdated);
@@ -1932,9 +1945,10 @@
         const path = IMG_DIR + '/' + m.id + '-' + (i + 1) + '.' + (match[1] === 'jpeg' ? 'jpg' : match[1]);
         await ghPut(path, match[2], 'Kuva huoneeseen');  // false = it is there already
         m.imageRefs[i] = path; changed = true;
+        kuvat.set(path, cleanDataUrl(m.images[i]));
       }
     }
-    if (changed) store.set(K.transcript, state.transcript);
+    if (changed) saveLocalTranscript();
   }
   async function pushRoom(closing) {
     clearTimeout(roomTimer); roomTimer = null;
@@ -2033,13 +2047,54 @@
   // A picture as the page and the models expect it: "data:image/jpeg;base64,…". GitHub sends raw files with
   // "; charset=utf-8", and Chrome kept that in the data URL, so its pictures from the memory were dropped.
   function cleanDataUrl(src) { return String(src || '').replace(/^data:(image\/[a-z0-9+.-]+)(?:;[^;,]*)*;base64,/i, 'data:$1;base64,'); }
+  // This browser's picture store (IndexedDB), keyed by the picture's path in the memory. If the browser has no
+  // picture store, every call simply misses and the picture comes from the memory.
+  const kuvat = {
+    db: null,
+    open() {
+      if (!kuvat.db) kuvat.db = new Promise((resolve, reject) => {
+        const r = indexedDB.open('moonglow-kuvat', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kuvat');
+        r.onsuccess = () => resolve(r.result);
+        r.onerror = () => reject(r.error);
+      });
+      return kuvat.db;
+    },
+    async get(path) {
+      try {
+        const db = await kuvat.open();
+        return await new Promise((res, rej) => { const q = db.transaction('kuvat', 'readonly').objectStore('kuvat').get(path); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+      } catch (e) { return undefined; }
+    },
+    async set(path, url) {
+      try {
+        const db = await kuvat.open();
+        await new Promise((res, rej) => { const tx = db.transaction('kuvat', 'readwrite'); tx.objectStore('kuvat').put(url, path); tx.oncomplete = res; tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error); });
+        return true;
+      } catch (e) { return false; }
+    },
+  };
+  // Pictures that earlier versions saved inside the text move to the picture store, for both lines, and the text
+  // is saved again without them. Every such picture is also in the memory, so nothing depends on the move.
+  async function moveSavedPictures() {
+    for (const j of Object.keys(JANAT)) {
+      const key = janaKey('transcript', j);
+      const list = j === jana ? state.transcript : store.get(key, []);
+      let moved = false;
+      for (const m of Array.isArray(list) ? list : []) {
+        if (!Array.isArray(m.images) || !m.images.length || !Array.isArray(m.imageRefs)) continue;
+        for (let i = 0; i < m.images.length; i++) if (m.imageRefs[i]) { await kuvat.set(m.imageRefs[i], cleanDataUrl(m.images[i])); moved = true; }
+      }
+      if (j === jana) saveLocalTranscript();
+      else if (moved) store.set(key, slimTranscript(list));
+    }
+  }
   // Images that did not arrive (a failed or interrupted fetch) are tried again after every sync of the room.
   function retryImages() { if (state.transcript.some(m => m.needImages)) fetchMissingImages(); }
-  let fetchingImages = false;
-  async function fetchMissingImages() {
-    if (fetchingImages) return;
-    fetchingImages = true;
-    try { await fetchImagesNow(); } finally { fetchingImages = false; }
+  let imagesJob = null;
+  function fetchMissingImages() {
+    if (!imagesJob) imagesJob = fetchImagesNow().finally(() => { imagesJob = null; });
+    return imagesJob;
   }
   async function fetchImagesNow() {
     for (const m of state.transcript) {
@@ -2047,17 +2102,23 @@
       try {
         const urls = [];
         for (const path of m.imageRefs) {
-          const type = /\.png$/i.test(path) ? 'image/png' : 'image/jpeg';
-          const blob = new Blob([await (await ghRaw(path)).arrayBuffer()], { type });
-          urls.push(await new Promise((res, rej) => {
-            const fr = new FileReader();
-            fr.onload = () => res(cleanDataUrl(fr.result));
-            fr.onerror = () => rej(fr.error);
-            fr.readAsDataURL(blob);
-          }));
+          let url = cleanDataUrl(await kuvat.get(path));
+          if (!/^data:image\//.test(url)) {
+            if (!ghCfg()) throw new Error('no memory to fetch from');
+            const type = /\.png$/i.test(path) ? 'image/png' : 'image/jpeg';
+            const blob = new Blob([await (await ghRaw(path)).arrayBuffer()], { type });
+            url = await new Promise((res, rej) => {
+              const fr = new FileReader();
+              fr.onload = () => res(cleanDataUrl(fr.result));
+              fr.onerror = () => rej(fr.error);
+              fr.readAsDataURL(blob);
+            });
+            kuvat.set(path, url);
+          }
+          urls.push(url);
         }
         m.images = urls; delete m.needImages;
-        store.set(K.transcript, state.transcript);
+        saveLocalTranscript();
         renderMsg(m);
       } catch (e) { /* the message stays without its images for now; the next sync of the room tries again */ }
     }
@@ -2074,6 +2135,7 @@
     if (memKind() === 'folder') await loadPages();
     else if (memKind() === 'github') { await pullRoom(true); await refreshShared(); }
     await loadTausta();
+    if (state.transcript.some(m => m.needImages)) await fetchMissingImages();
   }
 
   // Phones: the one-line input grows with the text, up to 40 % of the screen.
@@ -2175,6 +2237,7 @@
   $('#btnClear').title = 'Tyhjentää tämän janan keskustelun ja kululaskurin. Toinen jana pysyy ennallaan. Kun muisti on yhdistetty, keskustelu on jo tallessa Keskustelut-kansiossa.';
   if (jana !== 'seikkailu') $('#input').placeholder = $('#input').placeholder.replace('huoneeseen', JANAT[jana].ill);
   renderJanat(); renderChips(); renderAskWho(); renderAll(); renderCost();
+  moveSavedPictures().then(() => fetchMissingImages());
   loadModels();
   // The web version connects to GitHub; the local file version restores its folder.
   // Safe mode: Moonglow.html#nokansio opens the room without restoring the folder connection.
