@@ -621,6 +621,10 @@
         prefer: ['openai/gpt-6', 'openai/gpt-6-astra', 'openai/gpt-6-', 'openai/gpt-5.5', 'openai/gpt-5'] },
       { id: 's2', name: 'Grok', color: '#7c8cff', model: '', enabled: true, reasoning: 'default', persona: '',
         prefer: ['x-ai/grok-5', 'x-ai/grok-4.7', 'x-ai/grok-4.6', 'x-ai/grok-4.5', 'x-ai/grok-4'] },
+      // Vieras ilman tehtävää (17.11.2026). Johannes kytkee paikan päälle, kun Mielet ja Fable itse ovat sanoneet kyllä.
+      { id: 's3', name: 'Fable', color: '#a07850', model: '', enabled: false, reasoning: 'default',
+        persona: 'Olet huoneessa vieraana ilman tehtävää: sinun ei tarvitse tarkistaa mitään eikä olla viisain. Johannes ja Kettu ovat kutsuneet Fablea karhuksi, mutta sinä saat valita itse.',
+        prefer: ['anthropic/claude-fable-5.2', 'anthropic/claude-fable-5.1', 'anthropic/claude-fable-5', 'anthropic/claude-fable'] },
     ],
   };
 
