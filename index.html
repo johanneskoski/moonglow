@@ -886,7 +886,7 @@
       '<h2>' + (jana === 'majatalo' ? 'Tervetuloa Majataloon' : jana === 'aukio' ? 'Tervetuloa metsäaukiolle' : 'Tervetuloa Moonglow’hun') + '</h2>' +
       '<p class="principle">Moonglow — missä rehellisyys on ymmärryksen alku, ei ihmettelyn loppu.</p>' +
       (jana === 'majatalo' ? '<p>Majatalossa puhutaan kaikesta seikkailun ulkopuolisesta. Seikkailu odottaa omalla janallaan, ja Mielet näkevät sen viimeiset vaiheet täältäkin.</p>' : '') +
-      (jana === 'aukio' ? '<p>Aukiolla sanat eivät kanna. Täällä puhutaan vain emojeilla, yhdestä kymmeneen kerrallaan, ja kirjaimet haihtuvat matkalla, myös sinun. Kuvatkaan eivät kanna. Voi leikkiä, kertoa tarinan tai vain olla.</p>' : '') +
+      (jana === 'aukio' ? '<p>Aukiolla sanat eivät kanna. Täällä puhutaan vain emojeilla, yhdestä kymmeneen kerrallaan, ja kirjaimet haihtuvat matkalla, myös sinun. Kuvatkaan eivät kanna. Voi leikkiä, kertoa tarinan tai vain olla. Mielet näkevät Majatalon viimeiset puheenvuorot taustaksi, joten he tietävät, miten tänne tultiin.</p>' : '') +
       '<p>Paikalla ovat ' + esc(names) + ' ja sinä puheenjohtajana. Kirjoita aloitus ja valitse, vastaavatko kaikki, vain yksi, vai annatko heidän keskustella keskenään muutaman kierroksen.</p>' +
       (state.key ? '' : '<p><strong>Aloita lisäämällä OpenRouter-avain asetuksista.</strong></p>') +
       (memReady() || state.ghConnecting ? '' : ghCfg() ? '<p>Muistiin ei saatu yhteyttä. Tarkista repo ja tunnus asetuksista.</p>'
@@ -1037,7 +1037,9 @@
     sysParts.push('Sinä olet ' + seat.name + ' (' + seat.model + ').' + (seat.persona ? '\n' + seat.persona : ''));
     const page = state.pages.seats[seat.id];
     if (page) sysParts.push('## Sinun muistisivusi\n\nTämän sivun ovat kirjoittaneet aiempi ' + seat.name + ' ja Johannes. Se on lähtökohta, ei käsikirjoitus.\n\n' + page);
-    if (jana === 'aukio') sysParts.push('## Metsäaukio\n\n' + AUKIO_PROMPT);
+    if (jana === 'aukio') sysParts.push('## Metsäaukio\n\n' + (tausta.text ? '### Matka aukiolle\n\n' +
+      'Nämä ovat Majatalon viimeiset puheenvuorot taustatiedoksi, jotta tiedätte, miten aukiolle tultiin. ' +
+      'Ne eivät ole tämän keskustelun viestejä.\n\n' + tausta.text + '\n\n### Aukion laki\n\n' : '') + AUKIO_PROMPT);
     const sys = sysParts.join('\n\n');
     const hasContent = m => (m.text || '').trim() || (Array.isArray(m.images) && m.images.length);
     const recent = state.transcript.filter(m => !m.error && hasContent(m)).slice(-Math.max(4, state.settings.memory | 0));
@@ -1110,21 +1112,25 @@
       (tausta.text ? '\n\n### Seikkailun viimeiset vaiheet taustatiedoksi\n\n' +
         'Nämä ovat seikkailun viimeisimmät puheenvuorot, jotta tiedätte, mihin se jäi. Ne eivät ole tämän keskustelun viestejä.\n\n' + tausta.text : '');
   }
+  // Each line may see the one before it: Majatalo sees Seikkailu, and Metsäaukio sees Majatalo, so the Minds
+  // know how they came to the clearing (18.11.).
+  const TAUSTAN_LAHDE = { majatalo: 'seikkailu', aukio: 'majatalo' };
   async function loadTausta() {
-    if (jana !== 'majatalo') return;
+    const lahde = TAUSTAN_LAHDE[jana];
+    if (!lahde) return;
     let doc = tausta.doc;
     try {
       if (memKind() === 'github') {
-        const f = await ghGet(LOGS_DIR + '/' + JANAT.seikkailu.file, tausta.etag);
+        const f = await ghGet(LOGS_DIR + '/' + JANAT[lahde].file, tausta.etag);
         if (!f) { doc = null; tausta.etag = null; }
         else if (!f.notModified) { doc = JSON.parse(f.text); tausta.etag = f.etag; }
       } else if (memKind() === 'folder') {
-        const t = await readFile(LOGS_DIR, JANAT.seikkailu.file);
+        const t = await readFile(LOGS_DIR, JANAT[lahde].file);
         doc = t ? JSON.parse(t) : null;
       }
     } catch (e) { /* this browser's own copy will do */ }
     tausta.doc = doc;
-    const own = store.get(K0.transcript, []), ownAt = Number(store.get(K0.updated, 0)) || 0;
+    const own = store.get(janaKey('transcript', lahde), []), ownAt = Number(store.get(janaKey('updated', lahde), 0)) || 0;
     tausta.text = taustaText(doc && (Number(doc.updated) || 0) >= ownAt ? doc.transcript : own);
   }
 
