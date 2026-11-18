@@ -468,11 +468,17 @@
             <input type="number" id="temperature" min="0" max="1.5" step="0.1" style="width:100%">
           </div>
         </div>
-        <div class="f-row3">
+        <div class="f-row">
           <div>
             <label class="f" for="humanElain">Sinun eläimesi (emoji)</label>
             <input type="text" id="humanElain" class="full" maxlength="16" placeholder="🐰">
           </div>
+          <div>
+            <label class="f" for="humanAlus">Sinun aluksesi nimi</label>
+            <input type="text" id="humanAlus" class="full" maxlength="120">
+          </div>
+        </div>
+        <div class="f-row">
           <div>
             <label class="f" for="order">Puhejärjestys</label>
             <select id="order" class="full">
@@ -818,7 +824,9 @@
     const mind = m.speaker !== 'human' && !lab.blind;
     const seat = mind ? seatById(m.speaker) : null;
     const h = mind && m.hahmo && m.hahmo.nimi ? m.hahmo : null;
-    const alus = mind ? String(m.alus || (seat && seat.alus) || '').trim() : '';
+    // Johannes may have a ship name too (18.11.), the first human with one; it sits under his name like the Minds'.
+    const alus = mind ? String(m.alus || (seat && seat.alus) || '').trim()
+                      : (m.speaker === 'human' ? String(state.settings.humanAlus || '').trim() : '');
     // The animal is the speaker's own emoji, shown on screen only and hidden with the name in a blind test.
     // With a Seikkailu character it moves to the second line with the Mind's own name.
     const elain = mind ? String(m.elain || (seat && seat.elain) || '').trim()
@@ -1799,6 +1807,7 @@
     $('#order').value = st.order;
     $('#blind').value = st.blind;
     $('#humanElain').value = st.humanElain || '';
+    $('#humanAlus').value = st.humanAlus || '';
     $('#seatFields').innerHTML = st.seats.map(seatFieldHTML).join('');
     document.querySelectorAll('#seatFields [data-k="model"]').forEach(inp => inp.addEventListener('input', fillSeatPrices));
     fillSeatPrices();
@@ -1824,6 +1833,7 @@
     st.order = $('#order').value;
     st.blind = $('#blind').value;
     st.humanElain = $('#humanElain').value.trim();
+    st.humanAlus = $('#humanAlus').value.trim();
     document.querySelectorAll('#seatFields fieldset').forEach(fs => {
       const s = st.seats[Number(fs.dataset.seat)];
       const get = k => fs.querySelector('[data-k="' + k + '"]').value;
