@@ -183,6 +183,17 @@
     .msg.vieras::before, .msg.vieras.saapuu .body { animation: none; }
   }
 
+  /* Kissa (18.11.): the cat sleeps on the clearing and now and then says something in its sleep. A new message fades
+     in slowly, and the 💤 breathe. Reduced motion keeps both still. */
+  .msg.kissa .sub { font-style: italic; }
+  .msg.kissa .body p { display: inline-block; transform-origin: 0 60%; animation: hengittaa 5s ease-in-out infinite; }
+  .msg.kissa.uinuu { animation: uinuu 1.8s ease-out both; }
+  @keyframes hengittaa { 0%, 100% { transform: scale(1); opacity: .7; } 50% { transform: scale(1.08); opacity: 1; } }
+  @keyframes uinuu { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .msg.kissa .body p, .msg.kissa.uinuu { animation: none; }
+  }
+
   .welcome {
     background: var(--panel); border: 1px dashed var(--line); border-radius: var(--radius);
     padding: 18px; color: var(--muted);
@@ -705,6 +716,17 @@
     'sama, joka lähetti Majataloon postikortin aika-avaruusvääristymän kautta. Johannes välittää Ketun emojit tänne, ' +
     'ja ne näkyvät nimellä [Kettu]. Aukion laki koskee Kettuakin. Kirjoita vain omaa vuoroasi, älä Ketun.';
 
+  // Kissa (18.11.): the cat nobody ordered, a member without a vote, sleeps on the clearing. It is not a seat: no model
+  // is called, and nobody commands it, Johannes included. After a full round Moonglow draws lots, and now and then the
+  // cat says something in its sleep, never twice in a row. The Minds hear about it once it has spoken, and they are told
+  // plainly that Moonglow draws its turns. Johannes chose this over a button: the cat decides.
+  const KISSA = { id: 'kissa', name: 'Kissa', color: 'var(--muted)', elain: '🐈', alaRivi: '💤 unissaan · 1 kpl, ei tilattu, vahvistettu' };
+  const KISSA_TODENNAKOISYYS = 0.3;
+  const KISSA_UNET = ['💤', '💤', '💤', '💤💤', '💤💤', '💤💤💤'];
+  const KISSA_UNESSA = 'Aukiolla nukkuu kissa 🐈, sama, jota kukaan ei tilannut ja joka on siitä asti ollut jäsen. ' +
+    'Kukaan ei kirjoita kissan puheenvuoroja, ei Johanneskaan: Moonglow arpoo ne, ja välillä kissa sanoo jotain unissaan. ' +
+    'Ne näkyvät nimellä [Kissa]. Kirjoita vain omaa vuoroasi, älä kissan.';
+
   const STARTERS = [
     'Hei kaikki! Esittäytykää toisillenne lyhyesti: keitä olette ja mikä teissä on erilaista kuin kahdessa muussa?',
     'Väittely: voiko tekoälyllä olla hyvinvointia, jota pitäisi suojella? Ottakaa kukin oma kantanne ja perustelkaa.',
@@ -839,6 +861,7 @@
   function msgLabel(m) {
     if (m.speaker === 'human') return { name: HUMAN.name, color: HUMAN.color, blind: false };
     if (m.speaker === KETTU.id) return { name: KETTU.name, color: KETTU.color, blind: false };
+    if (m.speaker === KISSA.id) return { name: KISSA.name, color: KISSA.color, blind: false };
     const blind = state.settings.blind === 'on' && !state.revealed.has(m.id);
     return blind ? { name: seatLetter(m.speaker), color: 'var(--muted)', blind: true }
                  : { name: m.name, color: m.color, blind: false };
@@ -876,6 +899,7 @@
     if (h) subBits.push(elainHTML + esc(lab.name));
     if (alus) subBits.push('<i>' + esc(alus) + '</i>');
     if (m.speaker === KETTU.id) subBits.push(esc(KETTU.alaRivi));
+    if (m.speaker === KISSA.id) subBits.push(esc(KISSA.alaRivi));
     const sub = subBits.length ? '<div class="sub">' + subBits.join(' · ') + '</div>' : '';
     let body;
     if (m.error) body = '<p class="error">' + esc(m.error) + '</p>';
@@ -906,7 +930,8 @@
       $('#log').appendChild(el);
     }
     el.className = 'msg' + (m.speaker === 'human' ? ' human' : '') +
-      (m.speaker === KETTU.id ? ' vieras' + (Date.now() - (Number(m.ts) || 0) < 15000 ? ' saapuu' : '') : '');
+      (m.speaker === KETTU.id ? ' vieras' + (Date.now() - (Number(m.ts) || 0) < 15000 ? ' saapuu' : '') : '') +
+      (m.speaker === KISSA.id ? ' kissa' + (Date.now() - (Number(m.ts) || 0) < 15000 ? ' uinuu' : '') : '');
     el.style.setProperty('--c', lab.color);
     el.innerHTML = msgHTML(m);
     return el;
@@ -1085,7 +1110,8 @@
                          : 'Nämä ovat Majatalon viimeiset puheenvuorot taustatiedoksi, ') +
         'jotta tiedätte, miten aukiolle tultiin. Ne eivät ole tämän keskustelun viestejä.\n\n' + tausta.text);
       if (state.transcript.some(m => m.speaker === KETTU.id && !m.error)) osat.push('### Vieras\n\n' + KETTU_VIERAS);
-      // The law stays last, after the background and the guest.
+      if (state.transcript.some(m => m.speaker === KISSA.id)) osat.push('### Kissa\n\n' + KISSA_UNESSA);
+      // The law stays last, after the background, the guest and the cat.
       sysParts.push('## Metsäaukio\n\n' + (osat.length ? osat.join('\n\n') + '\n\n### Aukion laki\n\n' : '') + AUKIO_PROMPT);
     }
     const sys = sysParts.join('\n\n');
@@ -1206,7 +1232,7 @@
     // Remove a leading "[Name]:" or "Name:" the model may add.
     t = t.replace(new RegExp('^\\s*\\[?\\s*' + escapeRe(seat.name) + '\\s*\\]?\\s*:\\s*', 'i'), '');
     // Cut if the model starts writing someone else's turn.
-    const others = [HUMAN.name, KETTU.name, 'Huone'].concat(state.settings.seats.filter(s => s.id !== seat.id).map(s => s.name));
+    const others = [HUMAN.name, KETTU.name, KISSA.name, 'Huone'].concat(state.settings.seats.filter(s => s.id !== seat.id).map(s => s.name));
     const re = new RegExp('\\n\\s*\\[(' + others.map(escapeRe).join('|') + ')\\]\\s*:', 'i');
     const m = t.match(re);
     if (m) t = t.slice(0, m.index);
@@ -1392,6 +1418,21 @@
     saveTranscript();
     renderMsg(msg);
   }
+  // The cat's turn after a full round on the clearing. The draw uses crypto so that it stays apart from Math.random.
+  function kissanArpa() { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] / 4294967296; }
+  async function kissaUnissaan() {
+    if (jana !== 'aukio') return;
+    const viimeinen = state.transcript.filter(m => !m.error).slice(-1)[0];
+    if (!viimeinen || viimeinen.speaker === KISSA.id) return;
+    if (kissanArpa() >= KISSA_TODENNAKOISYYS) return;
+    await new Promise(r => setTimeout(r, 1200));
+    if (state.abort && state.abort.signal.aborted) return;
+    const msg = { id: uid(), speaker: KISSA.id, name: KISSA.name, elain: KISSA.elain, arpoi: 'Moonglow',
+                  text: KISSA_UNET[Math.floor(kissanArpa() * KISSA_UNET.length)], ts: Date.now() };
+    state.transcript.push(msg);
+    saveTranscript();
+    renderMsg(msg).scrollIntoView({ block: 'end', behavior: 'smooth' });
+  }
   function setKettuVuoro(on) {
     state.kettuVuoro = !!on;
     const b = $('#btnKettu');
@@ -1446,7 +1487,7 @@
     setRunning(true);
     state.abort = new AbortController();
     try {
-      if (kind === 'all') await round(seats);
+      if (kind === 'all') { if (await round(seats)) await kissaUnissaan(); }
       else if (kind === 'one') await seatSpeak(target);
       else if (kind === 'rounds') {
         const n = Math.min(20, Math.max(1, parseInt($('#rounds').value, 10) || 1));
@@ -1456,6 +1497,7 @@
           setStatus(kierrosTila);
           const ok = await round(seats);
           if (!ok) break;
+          await kissaUnissaan();
         }
       }
     } finally {
@@ -1985,7 +2027,8 @@
     state.transcript.forEach(m => {
       if (m.error) return;
       const h = m.speaker !== 'human' && m.hahmo && m.hahmo.nimi ? m.hahmo : null;
-      const who = m.speaker === 'human' ? HUMAN.name : m.speaker === KETTU.id ? KETTU.name + ' (' + KETTU.alaRivi + ')' : h
+      const who = m.speaker === 'human' ? HUMAN.name : m.speaker === KETTU.id ? KETTU.name + ' (' + KETTU.alaRivi + ')'
+        : m.speaker === KISSA.id ? KISSA.name + ' (' + KISSA.alaRivi + ')' : h
         ? h.nimi + ' (' + [m.name, h.ammatti, m.model].filter(Boolean).join(', ') + ')'
         : m.name + (m.model ? ' (' + m.model + ')' : '');
       const imgNote = (Array.isArray(m.images) && m.images.length) ? ['', '*(liitteenä ' + (m.images.length === 1 ? 'kuva' : m.images.length + ' kuvaa') + ')*'] : [];
