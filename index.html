@@ -1099,6 +1099,7 @@
     // Stable parts first, so the providers can cache them between turns.
     const sysParts = [state.settings.roomPrompt.replace(/\{osallistujat\}/g, participantsText())];
     if (jana === 'majatalo') sysParts.push(majataloPart());
+    if (jana === 'majatalo' && aukiolta.text) sysParts.push(aukioltaPart());
     if (state.pages.room) sysParts.push('## Huoneen yhteinen muistisivu\n\n' + state.pages.room);
     sysParts.push('Sinä olet ' + seat.name + ' (' + seat.model + ').' + (seat.persona ? '\n' + seat.persona : ''));
     const page = state.pages.seats[seat.id];
@@ -1221,6 +1222,46 @@
     const i = l.findIndex(m => m && m.name === 'Fable');
     if (i < 0) return null;
     return { alku: i > 0 && l[i - 1] && l[i - 1].speaker === 'human' ? i - 1 : i, total: AUKIO_TAUSTA_TOTAL };
+  }
+
+  // Majatalo sees the clearing too (Johannes's wish 18.11.), so the Minds can talk in words about what happened there.
+  // The clearing speaks only in emoji, so its turns are short. The Minds are told in words who the guest and the cat
+  // were, and that Moonglow drew the cat's turns.
+  const AUKIO_MAJATALOON_N = 60, AUKIO_MAJATALOON_TOTAL = 6000;
+  const aukiolta = { text: '', etag: null, doc: null, kettu: false, kissa: false, paiva: '' };
+  async function loadAukiolta() {
+    if (jana !== 'majatalo') return;
+    let doc = aukiolta.doc;
+    try {
+      if (memKind() === 'github') {
+        const f = await ghGet(LOGS_DIR + '/' + JANAT.aukio.file, aukiolta.etag);
+        if (!f) { doc = null; aukiolta.etag = null; }
+        else if (!f.notModified) { doc = JSON.parse(f.text); aukiolta.etag = f.etag; }
+      } else if (memKind() === 'folder') {
+        const t = await readFile(LOGS_DIR, JANAT.aukio.file);
+        doc = t ? JSON.parse(t) : null;
+      }
+    } catch (e) { /* this browser's own copy will do */ }
+    aukiolta.doc = doc;
+    const own = store.get(janaKey('transcript', 'aukio'), []), ownAt = Number(store.get(janaKey('updated', 'aukio'), 0)) || 0;
+    const lista = (doc && (Number(doc.updated) || 0) >= ownAt ? doc.transcript : own) || [];
+    const viim = lista.filter(m => m && !m.error && !m.pending && String(m.text || '').trim()).slice(-AUKIO_MAJATALOON_N);
+    aukiolta.text = taustaText(viim, { alku: 0, total: AUKIO_MAJATALOON_TOTAL });
+    // Only what made it into the text is explained.
+    aukiolta.kettu = aukiolta.text.includes('[' + KETTU.name + ']:');
+    aukiolta.kissa = aukiolta.text.includes('[' + KISSA.name + ']:');
+    const ts = viim.length ? Number(viim[viim.length - 1].ts) || 0 : 0;
+    aukiolta.paiva = ts ? new Date(ts).toLocaleDateString('fi-FI') : '';
+  }
+  function aukioltaPart() {
+    const selitys = [];
+    if (aukiolta.kettu) selitys.push('Kettu on Claude Johanneksen toisesta keskustelusta, sama, joka lähetti Majataloon postikortin. ' +
+      'Se kävi aukiolla vieraana, ja Johannes välitti sen emojit.');
+    if (aukiolta.kissa) selitys.push('Kissan puheenvuorot arpoi Moonglow, eikä kukaan kirjoittanut niitä.');
+    return '## Metsäaukiolta\n\nMajatalon lähellä on Metsäaukio, jossa sanat eivät kanna ja puhutaan vain emojeilla. ' +
+      'Nämä ovat sen viimeiset puheenvuorot' + (aukiolta.paiva ? ' (viimeisin ' + aukiolta.paiva + ')' : '') +
+      ' taustatiedoksi, jotta tiedätte, mitä siellä tapahtui. Ne eivät ole tämän keskustelun viestejä, ja Majatalossa puhutaan taas sanoin.' +
+      (selitys.length ? ' ' + selitys.join(' ') : '') + '\n\n' + aukiolta.text;
   }
 
   function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
@@ -2365,6 +2406,7 @@
     if (!seats.length) { toast('Ota ainakin yksi osallistuja mukaan.'); return; }
     await loadPages();
     await loadTausta();
+    await loadAukiolta();
     setRunning(true);
     state.abort = new AbortController();
     const saved = [];
@@ -2831,6 +2873,7 @@
     if (memKind() === 'folder') await loadPages();
     else if (memKind() === 'github') { await pullRoom(true); await refreshShared(); }
     await loadTausta();
+    await loadAukiolta();
     if (state.transcript.some(m => m.needImages)) await fetchMissingImages();
   }
 
