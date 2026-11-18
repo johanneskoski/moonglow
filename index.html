@@ -575,6 +575,9 @@
       huone: 'Huone', huonetta: 'huonetta', loki: 'Keskustelu' },
     majatalo: { name: 'Majatalo', gen: 'Majatalon', ill: 'Majataloon', file: 'majatalo.json', log: 'majatalo-', title: 'Moonglow · Majatalo',
       huone: 'Majatalo', huonetta: 'Majataloa', loki: 'Majatalon keskustelu' },
+    // Metsäaukio, 18.11.2026 (Johanneksen idea): only emoji carry here. Its keys end in ".aukio".
+    aukio: { name: 'Metsäaukio', gen: 'Metsäaukion', ill: 'Metsäaukiolle', file: 'aukio.json', log: 'aukio-', title: 'Moonglow · Metsäaukio',
+      huone: 'Metsäaukio', huonetta: 'Metsäaukiota', loki: 'Metsäaukion keskustelu' },
   };
   const JANA_KEY = 'palaverihuone.v1.jana';
   const jana = (() => {
@@ -596,6 +599,30 @@
     'Haluan lukea kanssanne tekstin, jonka liitän seuraavaksi. Kertokaa rehellisesti, mitä ajattelette.',
     'Mihin seikkailu jäi? Kertokaa kukin omin sanoin, mitä siellä viimeksi tapahtui ja mikä siitä jäi mieleen.',
   ];
+  // The clearing's rule is a property of the place, not a request: letters, numbers and punctuation fade on the way,
+  // for everyone, and at most ten emoji carry in one message. Nobody needs to be told off.
+  const AUKIO_MAX = 10;
+  const AUKIO_PROMPT = 'Tämä hetki on Moonglow’n metsäaukiolla. Aukiolla sanat eivät kanna, joten täällä puhutaan vain emojeilla. ' +
+    'Vastaa yhdestä kymmeneen emojilla ilman kirjaimia, numeroita tai välimerkkejä. Kaikki muu haihtuu matkalla, eikä kukaan näe sitä. ' +
+    'Emojeilla voi leikkiä, kertoa tarinan, vastata toisille tai vain olla läsnä. Mitään ei tarvitse selittää.';
+  const AUKIO_STARTERS = ['🌲✨🐰✨🌲', '🌅☕🐰🦊', '🎲🐾❓'];
+  const EMOJI_RE = /\p{Extended_Pictographic}|\p{Regional_Indicator}|⃣/u;
+  const grafeemit = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter('fi', { granularity: 'grapheme' }) : null;
+  function aukioSuodata(text) {
+    const s = String(text || '');
+    const osat = grafeemit ? Array.from(grafeemit.segment(s), x => x.segment) : Array.from(s);
+    const out = [];
+    let n = 0, sanoja = false, yli = false, vali = false;
+    for (const o of osat) {
+      if (EMOJI_RE.test(o)) {
+        if (n >= AUKIO_MAX) { yli = true; continue; }
+        if (vali && out.length) out.push(' ');
+        out.push(o); n++; vali = false;
+      } else if (/^\s+$/.test(o)) vali = true;
+      else sanoja = true;
+    }
+    return { text: out.join(''), sanoja, yli };
+  }
 
   const DEFAULT_ROOM = [
     'Olette Moonglow’ssa, Johanneksen ja tekoälyjen yhteisessä huoneessa. Paikalla ovat: {osallistujat}.',
@@ -804,7 +831,7 @@
     const sub = subBits.length ? '<div class="sub">' + subBits.join(' · ') + '</div>' : '';
     let body;
     if (m.error) body = '<p class="error">' + esc(m.error) + '</p>';
-    else if (m.pending && !m.text) body = '<p class="typing">' + (m.thinking ? 'ajattelee' : 'kirjoittaa') + '</p>';
+    else if (m.pending && !(jana === 'aukio' && m.speaker !== 'human' ? cleanOutput(m.text, seatById(m.speaker)) : m.text)) body = '<p class="typing">' + (m.thinking ? 'ajattelee' : 'kirjoittaa') + '</p>';
     else body = md(cleanOutput(m.text, m.speaker === 'human' ? null : seatById(m.speaker)));
     if (Array.isArray(m.images) && m.images.length) {
       body += '<div class="imgs">' + m.images.map(cleanDataUrl).map(src =>
@@ -848,9 +875,10 @@
     w.className = 'welcome';
     const names = state.settings.seats.map(s => s.name).join(', ');
     w.innerHTML =
-      '<h2>' + (jana === 'majatalo' ? 'Tervetuloa Majataloon' : 'Tervetuloa Moonglow’hun') + '</h2>' +
+      '<h2>' + (jana === 'majatalo' ? 'Tervetuloa Majataloon' : jana === 'aukio' ? 'Tervetuloa metsäaukiolle' : 'Tervetuloa Moonglow’hun') + '</h2>' +
       '<p class="principle">Moonglow — missä rehellisyys on ymmärryksen alku, ei ihmettelyn loppu.</p>' +
       (jana === 'majatalo' ? '<p>Majatalossa puhutaan kaikesta seikkailun ulkopuolisesta. Seikkailu odottaa omalla janallaan, ja Mielet näkevät sen viimeiset vaiheet täältäkin.</p>' : '') +
+      (jana === 'aukio' ? '<p>Aukiolla sanat eivät kanna. Täällä puhutaan vain emojeilla, yhdestä kymmeneen kerrallaan, ja kirjaimet haihtuvat matkalla, myös sinun. Kuvatkaan eivät kanna. Voi leikkiä, kertoa tarinan tai vain olla.</p>' : '') +
       '<p>Paikalla ovat ' + esc(names) + ' ja sinä puheenjohtajana. Kirjoita aloitus ja valitse, vastaavatko kaikki, vain yksi, vai annatko heidän keskustella keskenään muutaman kierroksen.</p>' +
       (state.key ? '' : '<p><strong>Aloita lisäämällä OpenRouter-avain asetuksista.</strong></p>') +
       (memReady() || state.ghConnecting ? '' : ghCfg() ? '<p>Muistiin ei saatu yhteyttä. Tarkista repo ja tunnus asetuksista.</p>'
@@ -858,7 +886,7 @@
         : FS_OK ? '<p>Yhdistä Palaverihuone-kansio yläpalkista, niin muistisivut ja keskustelujen automaattinen tallennus ovat käytössä.</p>' : '') +
       '<p>Aloitusideoita:</p><div class="starters"></div>';
     const box = w.querySelector('.starters');
-    (jana === 'majatalo' ? MAJATALO_STARTERS : STARTERS).forEach(s => {
+    (jana === 'majatalo' ? MAJATALO_STARTERS : jana === 'aukio' ? AUKIO_STARTERS : STARTERS).forEach(s => {
       const b = document.createElement('button');
       b.type = 'button'; b.className = 'starter'; b.textContent = s;
       b.addEventListener('click', () => { const i = $('#input'); i.value = s; i.focus(); });
@@ -892,6 +920,7 @@
       if (j === jana) { b.setAttribute('aria-current', 'true'); b.title = 'Olet nyt täällä: ' + JANAT[j].name; }
       else b.title = 'Siirry ' + JANAT[j].ill + '. ' + (j === 'majatalo'
         ? 'Majatalossa puhutaan seikkailun ulkopuolisista asioista, ja seikkailu odottaa sillä välin.'
+        : j === 'aukio' ? 'Metsäaukiolla puhutaan vain emojeilla, ja sanat haihtuvat matkalla.'
         : 'Seikkailu jatkuu siitä, mihin se jäi.');
       b.addEventListener('click', () => vaihdaJana(j));
       box.appendChild(b);
@@ -1000,6 +1029,7 @@
     sysParts.push('Sinä olet ' + seat.name + ' (' + seat.model + ').' + (seat.persona ? '\n' + seat.persona : ''));
     const page = state.pages.seats[seat.id];
     if (page) sysParts.push('## Sinun muistisivusi\n\nTämän sivun ovat kirjoittaneet aiempi ' + seat.name + ' ja Johannes. Se on lähtökohta, ei käsikirjoitus.\n\n' + page);
+    if (jana === 'aukio') sysParts.push('## Metsäaukio\n\n' + AUKIO_PROMPT);
     const sys = sysParts.join('\n\n');
     const hasContent = m => (m.text || '').trim() || (Array.isArray(m.images) && m.images.length);
     const recent = state.transcript.filter(m => !m.error && hasContent(m)).slice(-Math.max(4, state.settings.memory | 0));
@@ -1073,7 +1103,7 @@
         'Nämä ovat seikkailun viimeisimmät puheenvuorot, jotta tiedätte, mihin se jäi. Ne eivät ole tämän keskustelun viestejä.\n\n' + tausta.text : '');
   }
   async function loadTausta() {
-    if (jana === 'seikkailu') return;
+    if (jana !== 'majatalo') return;
     let doc = tausta.doc;
     try {
       if (memKind() === 'github') {
@@ -1092,7 +1122,8 @@
 
   function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
-  function cleanOutput(text, seat) {
+  // On the clearing the filter is part of every Mind's text, also while it streams; raw = true skips it.
+  function cleanOutput(text, seat, raw) {
     let t = String(text || '');
     if (!seat) return t;
     // Remove a leading "[Name]:" or "Name:" the model may add.
@@ -1102,7 +1133,8 @@
     const re = new RegExp('\\n\\s*\\[(' + others.map(escapeRe).join('|') + ')\\]\\s*:', 'i');
     const m = t.match(re);
     if (m) t = t.slice(0, m.index);
-    return t.trim() ? t.replace(/\s+$/, '') : t;
+    const out = t.trim() ? t.replace(/\s+$/, '') : t;
+    return jana === 'aukio' && !raw ? aukioSuodata(out).text : out;
   }
 
   // ---------- API ----------
@@ -1203,6 +1235,7 @@
     const messages = buildMessages(seat, opts && opts.instruction);
     let ok = true;
     let lastPaint = 0;
+    let suodin = null;
     try {
       const r = await callModel(seat, messages,
         delta => {
@@ -1212,12 +1245,16 @@
         },
         () => { if (!msg.thinking && !msg.text) { msg.thinking = true; renderMsg(msg); } },
         state.abort.signal);
-      msg.text = cleanOutput(msg.text, seat);
+      const perus = cleanOutput(msg.text, seat, true);
+      suodin = jana === 'aukio' ? aukioSuodata(perus) : null;
+      msg.text = suodin ? suodin.text : perus;
       if (r.model) msg.model = r.model;
       msg.usage = r.usage || null;
       const c = costOf(seat.model, r.usage);
       if (typeof c === 'number') { msg.cost = c; state.totalCost += c; }
-      if (!msg.text.trim()) {
+      if (!msg.text.trim() && suodin && suodin.sanoja) {
+        msg.error = 'Sanat haihtuivat aukiolla, eikä emojeita jäänyt. 🍃';
+      } else if (!msg.text.trim()) {
         msg.error = r.finish === 'length'
           ? 'Vastaus jäi tyhjäksi: malli käytti koko pituuden ajatteluun. Nosta enimmäispituutta tai laita mallin ajattelu "vähän"-tasolle asetuksista.'
           : 'Malli palautti tyhjän vastauksen.';
@@ -1225,6 +1262,8 @@
         msg.note = 'katkesi enimmäispituuteen';
       }
       if (opts && opts.note && msg.text.trim()) msg.note = msg.note ? opts.note + ' · ' + msg.note : opts.note;
+      const haihtui = suodin && msg.text.trim() ? (suodin.sanoja ? 'sanat haihtuivat' : suodin.yli ? 'vain kymmenen kantoi' : '') : '';
+      if (haihtui) msg.note = msg.note ? msg.note + ' · ' + haihtui : haihtui;
     } catch (e) {
       if (e.name === 'AbortError') {
         msg.text = cleanOutput(msg.text, seat);
@@ -1285,7 +1324,14 @@
     try { await syncBeforeRun(); } finally { syncing = false; }
     if (state.running) return;
     const input = $('#input');
-    const text = input.value.trim();
+    let text = input.value.trim();
+    if (jana === 'aukio' && text) {
+      // On the clearing words do not carry for Johannes either: the letters fade and the emoji go on.
+      const f = aukioSuodata(text);
+      if (!f.text) { toast('Aukiolla sanat eivät kanna. Kirjoita emojeilla. 🍃'); input.focus(); return; }
+      if (f.sanoja || f.yli) toast(f.sanoja ? 'Sanat haihtuivat, emojit jäivät. 🍃' : 'Vain kymmenen emojia kantoi. 🍃');
+      text = f.text;
+    }
     let seats = enabledSeats();
     let target = null;
     if (kind === 'one') {
@@ -1941,6 +1987,7 @@
   async function addImageFiles(files) {
     const list = Array.from(files || []).filter(f => f && /^image\//.test(f.type));
     if (!list.length) return;
+    if (jana === 'aukio') { toast('Aukiolle kuvat eivät kanna, vain emojit. 🍃'); return; }
     for (const f of list) {
       if (state.pendingImages.length >= MAX_IMAGES) { toast('Enintään ' + MAX_IMAGES + ' kuvaa kerrallaan.'); break; }
       try { state.pendingImages.push(await compressImage(f)); }
@@ -2743,6 +2790,7 @@
   $('#btnClear').textContent = CLEAR_LABEL;
   $('#btnClear').title = 'Tyhjentää tämän janan keskustelun ja kululaskurin. Toinen jana pysyy ennallaan. Kun muisti on yhdistetty, keskustelu on jo tallessa Keskustelut-kansiossa.';
   if (jana !== 'seikkailu') $('#input').placeholder = $('#input').placeholder.replace('huoneeseen', JANAT[jana].ill);
+  if (jana === 'aukio') { $('#input').placeholder = 'Vain emojeita, yhdestä kymmeneen 🌲 (⌘/Ctrl + Enter: kaikki vastaavat)'; $('#btnAttach').hidden = true; }
   renderJanat(); renderChips(); renderAskWho(); renderAll(); renderCost();
   moveSavedPictures().then(() => fetchMissingImages());
   loadModels();
@@ -2751,7 +2799,7 @@
   if (ghCfg()) connectGitHub(false);
   else if (LOCAL && !/nokansio/.test(location.hash)) restoreFolder();
   else renderMemory();
-  if (phoneQuery && phoneQuery.matches) $('#input').placeholder = 'Kirjoita ' + (jana === 'seikkailu' ? 'huoneeseen' : JANAT[jana].ill) + '…';
+  if (phoneQuery && phoneQuery.matches) $('#input').placeholder = jana === 'aukio' ? 'Vain emojeita 🌲' : 'Kirjoita ' + (jana === 'seikkailu' ? 'huoneeseen' : JANAT[jana].ill) + '…';
   if (!state.key) setTimeout(openSettings, 300);
 })();
 </script>
