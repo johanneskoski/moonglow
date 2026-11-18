@@ -1258,7 +1258,7 @@
     if (aukiolta.kettu) selitys.push('Kettu on Claude Johanneksen toisesta keskustelusta, sama, joka lähetti Majataloon postikortin. ' +
       'Se kävi aukiolla vieraana, ja Johannes välitti sen emojit.');
     if (aukiolta.kissa) selitys.push('Kissan puheenvuorot arpoi Moonglow, eikä kukaan kirjoittanut niitä.');
-    return '## Metsäaukiolta\n\nMajatalon lähellä on Metsäaukio, jossa sanat eivät kanna ja puhutaan vain emojeilla. ' +
+    return '## Metsäaukiolta\n\nMajatalon lähellä on kuuportti, ja sen takana on Metsäaukio, jossa sanat eivät kanna ja puhutaan vain emojeilla. ' +
       'Nämä ovat sen viimeiset puheenvuorot' + (aukiolta.paiva ? ' (viimeisin ' + aukiolta.paiva + ')' : '') +
       ' taustatiedoksi, jotta tiedätte, mitä siellä tapahtui. Ne eivät ole tämän keskustelun viestejä, ja Majatalossa puhutaan taas sanoin.' +
       (selitys.length ? ' ' + selitys.join(' ') : '') + '\n\n' + aukiolta.text;
